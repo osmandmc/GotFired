@@ -1,0 +1,43 @@
+﻿<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <h3 class="form-section">Kısa Cevaplar</h3>
+            </div>
+            <div class="portlet-body no-space">
+                <a href="#/answertemplate/create" class="btn btn-sm btn-default btn-circle">Oluştur</a>
+                <div class="table-container">
+                    <div class="dataTables_wrapper dataTables_extended_wrapper no-footer">
+                        <div class="row">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover no-footer">
+                                    <thead>
+                                        <tr class="heading">
+                                            <th class="sorting" tabindex="0">Cevap Adı</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="item in vm.data" role="row">
+                                            <td>{{item.Name}}</td>
+                                            <td>
+                                                <a href="#/answertemplate/edit/{{item.ID}}" class="btn btn-sm btn-default btn-circle btn-editable">
+                                                    <i class="fa fa-pencil"></i>
+                                                </a>
+                                                <a href="#/answertemplate/delete/{{item.ID}}" class="btn btn-sm btn-default btn-circle btn-editable">
+                                                    <i class="fa fa-remove"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <my-paging paging-data="vm.pagingData" paging-func="vm.listUser"></my-paging>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End: life time stats -->
+        </div>
+    </div>
+</div>

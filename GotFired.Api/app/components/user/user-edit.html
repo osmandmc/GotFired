@@ -1,0 +1,46 @@
+﻿<div class="portlet box yellow">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="fa fa-gift"></i>Kullanıcı Düzenle
+        </div>
+
+    </div>
+    <div class="portlet-body form">
+        <!-- BEGIN FORM-->
+
+        <form name="form" class="form-horizontal">
+            <div class="form-body">
+                <div class="form-group">
+                    <label class="control-label col-md-4">Kullanıcı Adı</label>
+                    <div class="col-md-4">
+                        <input name="userName" type="text" class="form-control" ng-model="vm.userRoleModel.UserName" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-md-4">Uygulamada Kullanılacak Ad</label>
+                    <div class="col-md-4">
+                        <input name="friendlyName" type="text" class="form-control" ng-model="vm.userRoleModel.FriendlyName" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-md-4">Roller</label>
+                    <div class="col-md-4">
+                        <select class="form-control" multiple
+                                ng-model="vm.userRoleModel.UserRoles"
+                                ng-options="item as item for item in vm.roles"></select>
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions fluid">
+                <div class="row">
+                    <div class="col-md-offset-3 col-md-9">
+                        <!--<button type="submit" class="btn green">Oluştur</button>-->
+                        <button type="submit" class="btn green" ng-click="vm.update()">Oluştur</button>
+                        <button type="button" class="btn default">Vazgeç</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <!-- END FORM-->
+    </div>
+</div>

@@ -1,0 +1,208 @@
+﻿<div class="col-md-6">
+    <div class="portlet box blue">
+        <div class="portlet-title">
+            <div class="caption">
+                <i class="fa fa-gift"></i>Vaka
+            </div>
+            <div class="tools">
+                <a href="javascript:;" class="collapse" data-original-title="" title=""> </a>
+            </div>
+        </div>
+        <div class="portlet-body form">
+            <!-- BEGIN FORM-->
+
+            <form action="#" class="form-horizontal">
+                <div class="form-body">
+                    <div class="form-group">
+                        <label class="control-label col-md-4">Adı Soyadı</label>
+                        <div class="col-md-8">
+                            <p class="form-control-static"> {{vm.data.FullName}} </p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-md-4">Yaş Aralığı:</label>
+                        <div class="col-md-8">
+                            <p class="form-control-static"> {{vm.data.AgeInterval}} </p>
+                            <!--<select ng-model="vm.data.AgeInterval"
+                            ng-options="ageInterval.id as ageInterval.name for ageInterval in vm.data.AgeIntervalList" ng-change="onchange(vm.data.ageInterval)" class="form-control"></select>-->
+                        </div>
+                    </div>
+
+                    <label class="control-label col-md-4">Cinsiyet:</label>
+                    <div class="col-md-8">
+                        <p class="form-control-static"> {{vm.data.Gender}} </p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="control-label col-md-4">Eğitim Durumu</label>
+                        <div class="col-md-8">
+                            <p class="form-control-static"> {{vm.data.EducationState}} </p>
+                            <!--<select ng-model="vm.data.EducationState"
+                            ng-options="educationState.id as educationState.name for educationState in vm.data.EducationStateList" ng-change="onchange(vm.data.EducationState)" class="form-control"></select>-->
+                        </div>
+                    </div>
+
+
+
+                    <div class="form-group">
+                        <label class="control-label col-md-4">Mail Adresi</label>
+                        <div class="col-md-8">
+                            <p class="form-control-static"> {{vm.data.EmailAddress}} </p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="PhoneNumber" class="control-label col-md-4">Telefon Numarası</label>
+                        <div class="col-md-8">
+                            <p class="form-control-static"> {{vm.data.PhoneNumber}} </p>
+                        </div>
+                    </div>
+
+
+
+                    <div class="form-group">
+                        <label class="control-label col-md-4">Çalışan Kişi Sayısı</label>
+                        <div class="col-md-8">
+                            <p class="form-control-static"> {{vm.data.EmployeeCount}} </p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="CityID" class="control-label col-md-4">İş Yerinin Bulunduğu Şehir</label>
+                        <div class="col-md-8">
+                            <p class="form-control-static"> {{vm.data.CityName}} </p>
+                            <!--<select ng-model="vm.data.CityId"
+                            ng-options="city.Id as city.Name for city in vm.data.Cities" ng-change="onchange(vm.data.CityID)" class="form-control"></select>-->
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="CompanySectorId" class="control-label col-md-4">Şirket Sektörü</label>
+                        <div class="col-md-8">
+                            <p class="form-control-static"> {{vm.data.CompanySectorName}} </p>
+                            <!--<select ng-model="vm.data.CompanySectorId"
+                            ng-options="companySector.Id as companySector.Name for companySector in vm.data.CompanySectors" ng-change="onchange(vm.data.CompanySectorId)" class="form-control"></select>-->
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-md-4">Şirket Hakkında Bilgiler</label>
+                        <div class="col-md-8">
+                            <p class="form-control-static"> {{vm.data.CompanyDescription}} </p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="control-label col-md-4">İşten Ayrılma Tarihi</label>
+                        <div class="col-md-8">
+                            <p class="form-control-static"> {{vm.data.EmploymentTerminationDate}} </p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="control-label col-md-4">Çalışma Süresi</label>
+                        <div class="col-md-8">
+                            <p class="form-control-static"> {{vm.data.EmploymentDurationSince}} </p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="SignedDocuments" class="control-label col-md-4">İmzalanan Belgeler</label>
+                        <div class="col-md-8">
+                            <p class="form-control-static"> {{vm.data.SignedDocuments}} </p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="DismissalState" class="control-label col-md-4">İşten Atılma Durumu</label>
+                        <div class="col-md-8">
+                            <p class="form-control-static"> {{vm.data.DismissalState}} </p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-md-4">Bildirilen Sebep</label>
+                        <div class="col-md-8">
+                            <p class="form-control-static"> {{vm.data.DeclaredTerminationReasonName}} </p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-md-4">Detay</label>
+                        <div class="col-md-8">
+                            <p class="form-control-static"> {{vm.data.DetailedExperience}} </p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="control-label  col-md-4">Ek Bilgiler</label>
+                        <div class="col-md-8">
+                            <p class="form-control-static"> {{vm.data.AdditionalInfo}} </p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="WantShareHisExperience" class="control-label col-md-4">Blogda paylaşılabilir mi?</label>
+                        <div class="col-md-8">
+                            <p class="form-control-static"> {{vm.data.WantShareHisExperienceString}} </p>
+                        </div>
+                    </div>
+
+                </div>
+
+            </form>
+            <!-- END FORM-->
+        </div>
+    </div>
+</div>
+<div class="col-md-6">
+    <div class="portlet box blue-hoki">
+        <div class="portlet-title">
+            <div class="caption">
+                <i class="fa fa-gift"></i>Yazışmalar
+            </div>
+            <div class="tools">
+                <a href="javascript:;" class="collapse" data-original-title="" title=""> </a>
+            </div>
+        </div>
+        <div class="portlet-body form">
+
+            <form action="#" class="form-horizontal">
+                <div class="form-body">
+                    <div class="timeline">
+                        <!-- TIMELINE ITEM -->
+                        <div class="timeline-item" ng-repeat="comment in vm.data.Comments">
+                            <div class="timeline-badge">
+                                <img class="timeline-badge-userpic" src="">
+                            </div>
+                            <div class="timeline-body">
+                                <div class="timeline-body-arrow"> </div>
+                                <div class="timeline-body-head">
+                                    <div class="timeline-body-head-caption">
+                                        <a href="javascript:;" class="timeline-body-title font-blue-madison">{{comment.UserName}}</a>
+                                        <span class="timeline-body-time font-grey-cascade">{{comment.CreatedDate}}</span>
+                                    </div>
+                                </div>
+                                <div class="timeline-body-content">
+                                    <span class="font-grey-cascade">
+                                        {{comment.Text}}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- END TIMELINE ITEM -->
+                    </div>
+
+                </div>
+                <div class="form-actions">
+                    <div class="row">
+                        <div class="col-md-offset-3 col-md-8">
+                            <a class="btn green" ng-click="vm.openModal('lg')">Cevap Yaz</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+

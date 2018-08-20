@@ -1,0 +1,354 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GotFired</title>
+    <link href="assets/global/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="http://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700&subset=all" rel="stylesheet" type="text/css" />
+    <link href="assets/global/plugins/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+    <link href="assets/global/plugins/simple-line-icons/simple-line-icons.min.css" rel="stylesheet" type="text/css" />
+    <link href="assets/global/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <link href="assets/global/plugins/bootstrap-switch/css/bootstrap-switch.min.css" rel="stylesheet" type="text/css" />
+    <!-- END GLOBAL MANDATORY STYLES -->
+    <!-- BEGIN THEME GLOBAL STYLES -->
+    <link href="assets/global/css/components.min.css" rel="stylesheet" id="style_components" type="text/css" />
+    <link href="assets/global/css/components-md.min.css" rel="stylesheet" id="style_components" type="text/css" />
+    <link href="assets/global/css/plugins-md.min.css" rel="stylesheet" type="text/css" />
+   
+    <link href="http://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.6/summernote.css" rel="stylesheet">
+    <!-- END THEME GLOBAL STYLES -->
+    <!-- BEGIN THEME LAYOUT STYLES -->
+    <link href="assets/layouts/layout4/css/layout.min.css" rel="stylesheet" type="text/css" />
+
+    <link href="assets/layouts/layout4/css/themes/light.min.css" rel="stylesheet" type="text/css" id="style_color" />
+    <link href="assets/layouts/layout4/css/custom.min.css" rel="stylesheet" type="text/css" />
+    <script src="Scripts/moment.min.js"></script>
+</head>
+<body class="page-container-bg-solid">
+
+    <div class="container padding-tb-20">
+        <div class="col-md-8 col-md-offset-2">
+            <div class="portlet light bordered">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="icon-equalizer font-blue-hoki"></i>
+                        <span class="caption-subject font-blue-hoki bold uppercase">İşten çıkartılmalara karşı destek/dayanışma çalışması</span>
+                    </div>
+                </div>
+                <div class="portlet-body form">
+                    <!-- BEGIN FORM-->
+                    <span class="caption-helper">
+                        Plaza Eylem Platformu olarak, birbirimizle dayanışma ve destek ilişkileri kurarak işten atılmalara karşı durabilmek için bir çalışma yapıyoruz. Kamusal alanda sadece rakamlardan ve istatistiklerden ibaret olarak ele alınan işten atılma durumu hakkında daha öznel bir bilgi toplayabilmek ve gerektiğinde yardımlaşabilmek için bu site üzerinden çalışma yürütüyoruz.
+                        Aşağıdaki formu doldurarak bu konuda bize yardımcı olabilir, dayanışma isteklerinizi paylaşabilirsiniz.
+                    </span>
+                    <!-- END FORM-->
+                </div>
+            </div>
+
+            <div class="portlet box blue-hoki">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-gift"></i>Yazışmalar
+                    </div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse" data-original-title="" title=""> </a>
+                    </div>
+                </div>
+                <div class="portlet-body form">
+
+                    <form action="#" class="form-horizontal" id="myForm">
+                        <div class="form-body">
+                            <div id="timeline" class="timeline">
+                            </div>
+
+                        </div>
+                        <div class="form-actions" id="answerBtnArea">
+                            <div class="row">
+                                <div class="col-md-offset-3 col-md-8">
+                                    <!--<a id="answer" class="btn green" data-toggle="modal" data-target="#myModal">Cevap Yaz</a>-->
+                                    <a id="answerBtn" class="btn green">Cevap Yaz</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="answerArea" class="form-actions" style="display:none">
+                            <div id="answerTextEditor"></div>
+                            <input id="answerText" name="Text" type="hidden" />
+                            <input id="DismissalCaseId" name="DismissalCaseId" type="hidden" />
+                            <input id="UserName" name="UserName" type="hidden" />
+                            <input id="CreateDate" name="CreateDate" type="hidden" />
+                            <input id="Guid" name="Guid" type="hidden" />
+
+                            <button name="close" type="button" class="btn dark btn-outline" data-dismiss="modal">Vazgeç</button>
+                            <button id="submitBtn" type="submit" class="btn green">Gönder</button>
+                        </div>
+</form>
+                    
+                </div>
+            </div>
+
+            <div class="portlet box blue">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-gift"></i>Vaka
+                    </div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse" data-original-title="" title=""> </a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <!-- BEGIN FORM-->
+                    <dl>
+                        <dt>Adı Soyadı</dt>
+                        <dd id="FullName"></dd>
+                        <dt>Yaş Aralığı:</dt>
+                        <dd id="AgeInterval"></dd>
+                        <dt>Cinsiyet</dt>
+                        <dd id="Gender"></dd>
+                        <dt>Eğitim Durumu</dt>
+                        <dd id="EducationState"></dd>
+                        <dt>Mail Adresi</dt>
+                        <dd id="EmailAddress"></dd>
+                        <dt>Telefon Numarası</dt>
+                        <dd id="PhoneNumber"></dd>
+                        <dt>Çalışan Kişi Sayısı</dt>
+                        <dd id="EmployeeCount"></dd>
+                        <dt>İş Yerinin Bulunduğu Şehir</dt>
+                        <dd id="CityId"></dd>
+                        <dt>Şirket Sektörü</dt>
+                        <dd id="CompanySectorName"></dd>
+                        <dt>Şirket Hakkında Bilgiler</dt>
+                        <dd id="CompanyDescription"></dd>
+
+                        <dt>İşten Ayrılma Tarihi</dt>
+                        <dd id="EmploymentTerminationDate"></dd>
+                        <dt>Çalışma Süresi</dt>
+                        <dd id="EmploymentDurationSince"></dd>
+                        <dt>Şirket Sektörü</dt>
+                        <dd id="CompanySectorName"></dd>
+                        <dt>İmzalanan Belgeler</dt>
+                        <dd id="SignedDocuments"></dd>
+
+                        <dt>İşten Atılma Durumu</dt>
+                        <dd id="DismissalState"></dd>
+                        <dt>Bildirilen Sebep</dt>
+                        <dd id="DeclaredTerminationReasonId"></dd>
+                        <!--<dt>Destek Gördünüz mü?</dt>
+                        <dd>
+                            <ul>
+                                <li ng-repeat="opt in vm.data.SupportedByNames">
+                                    
+                                </li>
+                            </ul>
+                        </dd>-->
+                        <dt>Detay</dt>
+                        <dd id="DetailedExperience"></dd>
+                        <dt>Ek Bilgiler</dt>
+                        <dd id="AdditionalInfo"></dd>
+                        <dt>Blogda paylaşılabilir mi?</dt>
+                        <dd id="WantShareHisExperience"></dd>
+                    </dl>
+                    
+                    <!-- END FORM-->
+                </div>
+            </div>
+        </div>
+
+       
+
+    </div>
+    <hr />
+    <footer>
+        <p>&copy; 2016 - istenatildim</p>
+    </footer>
+    <!-- Modal -->
+    <div class="modal fade" id="answerModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div id="answerText"><p>Hello Summernote</p></div>
+                <!--<form id="myForm">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title">Mail Oluştur</h4>
+                    </div>
+                    <div class="modal-body">
+                        <input id="DismissalCaseId" name="DismissalCaseId" type="hidden" />
+                        <input id="UserName" name="UserName" type="hidden" />
+                        <input id="CreateDate" name="CreateDate" type="hidden" />
+                        <input id="Guid" name="Guid" type="hidden" />
+                        <textarea id="answerText" name="Text" class="form-control ng-pristine ng-valid ng-empty ng-touched" style="width:100%; min-height:400px" row="10"></textarea>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button name="close" type="button" class="btn dark btn-outline" data-dismiss="modal">Vazgeç</button>
+                        <button id="submitBtn" type="submit" class="btn green">Gönder</button>
+                    </div>
+                </form>-->
+            </div>
+
+        </div>
+    </div>
+
+    <script src="assets/custom/js/vendors/jquery-2.0.0.min.js"></script>
+    <script src="Scripts/tether/tether.min.js"></script>
+    <script src="assets/custom/js/vendors/bootstrap.min.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.6/summernote.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#answerTextEditor').summernote();
+        });
+        $(document).ready(function () {
+            $("#answerBtn").click(function () {
+                $("#answerArea").show();
+                $("#answerBtnArea").hide();
+            });
+            //$("#answer").click(function () {
+            //    $("#answerModal").modal();
+            //});
+            $("#myForm").submit(function (e) {
+
+                var url = "/api/v1/dismissalcase/useranswer/"; // the script where you handle the form input.
+                $("#submitBtn").prop('disabled', true);
+                var markupStr = $('#answerTextEditor').summernote('code');
+                console.log(markupStr);
+                $("#answerText").val(markupStr);
+                console.log($("#answerText").val());
+                $.ajax({
+                    type: "POST",
+                    url: url,
+                    data: $("#myForm").serialize(), // serializes the form's elements.
+                    success: function (data) {
+                        console.log(data);
+                        $("#submitBtn").prop('disabled', false);
+                        //$("answerText").val('');
+                        insertComment(data);
+                        $("#answerArea").hide();
+                        $("#answerBtnArea").show();
+                        //$("#answerText").val('');
+                        //$("#answerModal").modal('hide');
+                    }
+                });
+                e.preventDefault();
+               
+                // avoid to execute the actual submit of the form.
+            });
+        });
+
+
+        document.onreadystatechange = function () {
+
+            if (document.readyState == "complete") {
+                var xmlhttp = new XMLHttpRequest();
+
+                xmlhttp.onreadystatechange = function () {
+                    if (xmlhttp.readyState == XMLHttpRequest.DONE) {
+                        if (xmlhttp.status == 200) {
+                            //document.getElementById("myDiv").innerHTML = xmlhttp.responseText;
+                            var data = JSON.parse(xmlhttp.responseText);
+                            console.log(data);
+                            document.getElementById('DismissalCaseId').value = data.Id;
+                            document.getElementById('Guid').value = data.Guid;
+                            document.getElementById('UserName').value = data.FullName;
+
+                            insertText('FullName', data.FullName);
+                            insertText('AgeInterval', data.AgeIntervalName);
+                            insertText('Gender', data.GenderName);
+                            insertText('EducationState', data.EducationStateName);
+                            insertText('EmailAddress', data.EmailAddress);
+                            insertText('PhoneNumber', data.PhoneNumber);
+                            insertText('EmployeeCount', data.EmployeeCountName);
+                            insertText('CityId', data.CityName);
+                            insertText('CompanySectorName', data.CompanySectorName);
+                            insertText('CompanyDescription', data.CompanyDescription);
+                            if (data.EmploymentTerminationDate!=null)
+                                insertText('EmploymentTerminationDate', moment(data.EmploymentTerminationDate).format("DD/MM/YYYY"));
+                            insertText('DismissalState', data.DismissalStateName);
+                            insertText('EmploymentDurationSince', data.EmploymentDurationSinceName);
+                            insertText('SignedDocuments', data.SignedDocuments);
+                            insertText('DeclaredTerminationReasonId', data.DeclaredTerminationReasonName);
+                            insertText('DetailedExperience', data.DetailedExperience);
+                            insertText('AdditionalInfo', data.AdditionalInfo);
+                            insertText('WantShareHisExperience', data.WantShareHisExperienceString);
+                            insertComments(data.Comments);
+
+                        }
+                        else if (xmlhttp.status == 400) {
+                            alert('There was an error 400');
+                        }
+                        else {
+                            alert('Cevabınızı görüntülerken bir hata oluştu. Lütfen size gönderilen son maildeki linke tıkladığınızdan emin olun. Sorun devam ederse bilgi@plazaeylem.org adresinden bize ulaşabilirsiniz.');
+                        }
+                    }
+                };
+                var guid = location.search.substring(1).split("=")[1];
+                xmlhttp.open("GET", "api/v1/dismissalcase/userview/" + guid, true);
+                xmlhttp.send();
+            }
+        };
+        function insertText(tag, text) {
+            if (true) {
+
+            }
+            document.getElementById(tag).innerHTML = text;
+        }
+        function insertComment(comment) {
+            var timeline = document.getElementById('timeline');
+            var timelineItem = document.createElement('div');
+            timelineItem.className += " timeline-item";
+            var timelineBody = document.createElement('div');
+            timelineBody.className += " timeline-body";
+            var timelineArrow = document.createElement('div');
+            timelineArrow.className += " timeline-body-arrow";
+            var timelineBodyHead = document.createElement('div');
+            timelineBodyHead.className += " timeline-body-head";
+            var timelineBodyHeadCaption = document.createElement('div');
+            timelineBodyHeadCaption.className += "timeline-body-head-caption";
+            var timelineBodyHeadUserName = document.createElement('a');
+            timelineBodyHeadUserName.className += "timeline-body-title font-blue-madison";
+            var timelineBodyHeadDate = document.createElement('span');
+            timelineBodyHeadDate.className += "timeline-body-time font-grey-cascade";
+            var timelineBodyContent = document.createElement('div');
+            timelineBodyContent.className += "timeline-body-content";
+            var timelineBodyContentText = document.createElement('span');
+            timelineBodyContentText.className += "font-grey-cascade";
+
+            var text = document.createTextNode(comment.Text);
+            var userName = document.createTextNode(comment.UserName);
+
+            var date = moment(comment.CreatedDate).format("D.MM.YYYY, HH:mm");
+            console.log(date);
+            var createdDate = document.createTextNode(date);
+
+            //head
+            timelineBodyHeadDate.appendChild(createdDate);
+            timelineBodyHeadUserName.appendChild(userName);
+            timelineBodyHeadCaption.appendChild(timelineBodyHeadUserName);
+            timelineBodyHeadCaption.appendChild(timelineBodyHeadDate);
+            timelineBodyHead.appendChild(timelineBodyHeadCaption);
+
+            //content
+            timelineBodyContentText.insertAdjacentHTML('afterbegin', comment.Text);
+            //timelineBodyContentText.innerHTML = text;
+            //timelineBodyContentText.appendChild(text);
+            timelineBodyContent.appendChild(timelineBodyContentText);
+
+            //body
+            timelineBody.appendChild(timelineArrow);
+            timelineBody.appendChild(timelineBodyHead);
+            timelineBody.appendChild(timelineBodyContent);
+
+            timelineItem.appendChild(timelineBody);
+            timeline.appendChild(timelineItem);
+        }
+        function insertComments(comments) {
+            var timeline = document.getElementById('timeline');
+
+            for (var i = 0; i < comments.length; i++) {
+
+                insertComment(comments[i]);
+            }
+        }
+    </script>
+
+</body>
+</html>

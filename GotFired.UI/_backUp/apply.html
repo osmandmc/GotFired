@@ -1,0 +1,419 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GotFired</title>
+    <title>GotFired</title>
+    <link href="assets/global/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="http://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700&subset=all" rel="stylesheet" type="text/css" />
+    <link href="assets/global/plugins/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+    <link href="assets/global/plugins/simple-line-icons/simple-line-icons.min.css" rel="stylesheet" type="text/css" />
+    <link href="assets/global/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <link href="assets/global/plugins/bootstrap-switch/css/bootstrap-switch.min.css" rel="stylesheet" type="text/css" />
+    <!-- END GLOBAL MANDATORY STYLES -->
+    <!-- BEGIN THEME GLOBAL STYLES -->
+    <link href="assets/global/css/components.min.css" rel="stylesheet" id="style_components" type="text/css" />
+    <link href="assets/global/css/components-md.min.css" rel="stylesheet" id="style_components" type="text/css" />
+    <link href="assets/global/css/plugins-md.min.css" rel="stylesheet" type="text/css" />
+    <!-- END THEME GLOBAL STYLES -->
+    <!-- BEGIN THEME LAYOUT STYLES -->
+    <link href="assets/layouts/layout4/css/layout.min.css" rel="stylesheet" type="text/css" />
+
+    <link href="assets/layouts/layout4/css/themes/light.min.css" rel="stylesheet" type="text/css" id="style_color" />
+    <link href="assets/layouts/layout4/css/custom.min.css" rel="stylesheet" type="text/css" />
+    <link href="Content/bootstrap-datepicker.min.css" rel="stylesheet" type="text/css" />
+    <link href="Content/bootstrap-datepicker3.min.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+    <style>
+        .control-label {
+            font-weight: 600;
+        }
+
+        textarea {
+            min-height: 100px;
+        }
+
+        ul {
+            list-style-type: none;
+        }
+
+        input[type=checkbox], input[type=radio] {
+            margin: 4px 10px 0;
+            /*margin-top: 1px\9;
+            line-height: normal;*/
+        }
+    </style>
+
+    <div class="container body-content padding-tb-20">
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-equalizer font-blue-hoki"></i>
+                    <span class="caption-subject font-blue-hoki bold uppercase">İşten çıkartılmalara karşı destek/dayanışma çalışması</span>
+                </div>
+            </div>
+            <div class="portlet-body form">
+                <!-- BEGIN FORM-->
+                <span class="caption-helper">
+                    Plaza Eylem Platformu olarak, birbirimizle dayanışma ve destek ilişkileri kurarak işten atılmalara karşı durabilmek için bir çalışma yapıyoruz. Kamusal alanda sadece rakamlardan ve istatistiklerden ibaret olarak ele alınan işten atılma durumu hakkında daha öznel bir bilgi toplayabilmek ve gerektiğinde yardımlaşabilmek için bu site üzerinden çalışma yürütüyoruz.
+                    Aşağıdaki formu doldurarak bu konuda bize yardımcı olabilir, dayanışma isteklerinizi paylaşabilirsiniz.
+                </span>
+                <p class="caption-helper"><a href="mailto:bilgi@plazaeylem.org">bilgi@plazaeylem.org</a> adresinden bize ulaşabilirsiniz.</p>
+                <!-- END FORM-->
+            </div>
+        </div>
+        <div class="portlet light bordered">
+            <div class="portlet-body form">
+                <!-- BEGIN FORM-->
+                <form id="applyForm" method="post" action="http://istenatildimdestek.tk/api/v1/dismissalcase/apply" class="horizontal-form">
+                    <div class="form-body">
+                        <h3 class="form-section">Kişisel Bilgiler</h3>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="Applicant.FullName" class="control-label">Adınız Soyadınız</label>
+                                    <input name="Applicant.FullName" class="form-control" required />
+                                    <span class="help-block">Gerçek adınızı kullanmanız gerekmiyor, uygun bir takma isim de kullanabilirsiniz.</span>
+                                    <span class="text-danger" />
+                                </div>
+                            </div>
+                            <!--/span-->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="Applicant.AgeInterval" class="control-label">Yaş Aralığınız</label>
+                                    <select id="AgeInterval" name="Applicant.AgeInterval" class="form-control" required>
+                                        <option value="">-- Seçiniz --</option>
+                                    </select>
+                                    <span class="text-danger" />
+                                </div>
+
+                            </div>
+                            <!--/span-->
+                        </div>
+                        <!--/row-->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="Applicant.Gender" class="control-label">Cinsiyetiniz</label>
+                                    <select id="Gender" name="Applicant.Gender" class="form-control" required>
+                                        <option value="">-- Seçiniz --</option>
+                                        <!--<option value="1">Erkek</option>
+                                        <option value="2">Kadın</option>-->
+                                    </select>
+                                    <span class="text-danger" />
+                                </div>
+
+                            </div>
+                            <!--/span-->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="Applicant.EducationalState" class="control-label">Eğitim Durumunuz</label>
+                                    <select id="EducationState" name="Applicant.EducationalState" class="form-control" required>
+                                        <option value="">-- Seçiniz --</option>
+                                    </select>
+                                    <span class="text-danger" />
+                                </div>
+                            </div>
+                            <!--/span-->
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="Applicant.Email" class="control-label">Mail Adresiniz</label>
+                                    <input name="Applicant.Email" class="form-control" type="email" />
+                                    <span name="Applicant.Email" class="text-danger" />
+                                </div>
+                            </div>
+                        </div>
+                        <h3 class="form-section">Vaka Detayı</h3>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="EmploymentTerminationDate" class="control-label">Ne zaman işten ayrıldınız?</label>
+                                    <input id="EmploymentTerminationDate" name="EmploymentTerminationDate" class="form-control" />
+                                    <span class="help-block">İşe iade davası ayrıldıktan sonraki 1 ay içinde açılabilmektedir.</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="CityID" class="control-label">Şirketinizin bulunduğu şehir</label>
+                                    <select id="CityID" name="CityID" class="form-control" required>
+                                        <option value="">-- Seçiniz --</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <!--/row-->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="SignedDocuments" class="control-label">İşyerinden ayrılırken herhangi bir belge imzaladınız mı? İmzaladıysanız bunun içeriği neydi? Örneğin iş kanunun hangi maddesi belirtilmiş?</label>
+                                    <textarea name="SignedDocuments" class="form-control"></textarea>
+                                    <span class="help-block">Yasal süreçler için önemli</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="DismissalState" class="control-label">Sözkonusu işyeri ile ilgili aşağıdaki durumlardan hangisi size en fazla uyuyor?</label>
+                                    <select id="DismissalState" name="DismissalState" class="form-control" required>
+                                        <option value="">-- Seçiniz --</option>
+                                    </select>
+                                    <span name="DismissalState" class="text-danger" />
+                                    <span class="help-block">İşveren çalışanı işten çıkartmak için türlü yöntemlere başvurur. Eğer yasal bir kılıf uyduramazsa işten ayrılmaya zorlayabilir. Aşağıda size uyan durumu işaretleyiniz. Diğer kısmına açıklamalarınızı yazabilirsiniz.</span>
+                                </div>
+                            </div>
+                            <!--/span-->
+                            <div class="col-md-6">
+                                <div class="form-group" id="cbList">
+                                    <label for="DeclaredTerminationReasonID" class="control-label">İşten çıkartıldıysanız, size bildirilen sebep neydi?</label>
+                                    <!--<select id="DeclaredTerminationReasonID" name="DeclaredTerminationReasonID" class="form-control">
+                                        <option value="">-- Seçiniz --</option>
+                                    </select>-->
+                                </div>
+                            </div>
+                            <!--/span-->
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="EmployeeCount" class="control-label">İş yerinizde kaç kişi çalışıyor?</label>
+                                    <select id="EmployeeCount" name="EmployeeCount" class="form-control" required>
+                                        <option value="">-- Seçiniz --</option>
+                                    </select>
+                                    <span class="help-block">Yasal süreçler için önemli</span>
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="EmploymentDurationSince" class="control-label">Bahsi geçen işyerinde ne kadar süredir çalışıyorsunuz / çalışıyordunuz?</label>
+                                    <select id="EmploymentDurationSince" name="EmploymentDurationSince" class="form-control" required>
+                                        <option value="">-- Seçiniz --</option>
+                                    </select>
+                                    <span class="help-block">Yasal süreçler için önemli</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="SupportedByID" class="control-label">Şimdiye kadar herhangi bir kişiden ya da kurumdan destek aldınız mı?</label>
+                                    <select id="SupportedByID" name="SupportedByID" class="form-control">
+                                        <option value="">-- Seçiniz --</option>
+                                    </select>
+                                    <span class="help-block">Çalışanlar genellikle işten ayrılma sonrası ya da işyerinde yaşadıkları sorunlar ve işten çıkarılma tehdidine karşı desteğe ihtiyaç duyarlar. Aşağıda size uygun olan seçeneklerin tümünü işaretleyebilirsiniz.</span>
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <!--<label for="CompanySectorID" class="control-label">İş yeriniz hangi sektörde faaliyet gösteriyor?</label>
+                                    <select name="CompanySectorID" class="form-control">
+                                        <option value="">-- Seçiniz --</option>
+                                    </select>-->
+                                    <label for="CompanySectorName" class="control-label">İş yeriniz hangi sektörde faaliyet gösteriyor?</label>
+                                    <input type="text" name="CompanySectorName" class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="CompanyDescription" class="control-label">Şirket hakkındaki bilgiler</label>
+                                    <textarea name="CompanyDescription" class="form-control"></textarea>
+                                    <span class="help-block">Taşerona bağlı çalışan mısınız? Çalıştığınız iş yeri büyük bir şirketin (mesela bir AVM zincirinin) bir şubesi mi? Burada şirketinizin adını, yapısını, şirket hakkında bize söylemek istediklerinizi yazabilirsiniz.</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="DetailedExperience" class="control-label">Son olarak, yaşadığınız sürecin detaylarını burada anlatabilirsiniz.</label>
+                                    <textarea name="DetailedExperience" class="form-control"></textarea>
+                                    <span name="DetailedExperience" class="text-danger" />
+                                </div>
+                            </div>
+                        </div>
+                        <h3 class="form-section">Sizinle iletişime geçmemizi ister misiniz?</h3>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div>
+                                    Çalışanların birbirine destek olması, işten çıkarılma süreçlerini çaışanlar için kolaylaştırırken, işverenler açısından da işten çıkarmayı zorlaştırır. Haklarınız konusunda daha fazla bilgiye ihtiyaç duyduğunuzu düşünüyorsanız, iletişim bilgilerinizi ve işten çıkarılma sürecinizle ilgili başka ayrıntıları bizimle paylaşabilirsiniz.
+                                </div>
+                                <hr />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="Applicant.PhoneNumber" class="control-label">Telefon Numaranız</label>
+                                    <input name="Applicant.PhoneNumber" class="form-control" type="text" />
+                                    <span name="Applicant.PhoneNumber" class="text-danger" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="control-label">Eklemek istedikleriniz</label>
+                                    <textarea name="AdditionalInfo" class="form-control"></textarea>
+                                    <span name="AdditionalInfo" class="text-danger" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+
+                                    <label for="WantShareHisExperience" class="control-label">Deneyiminizin blogda paylaşılmasını ister misiniz?</label>
+                                    <div>
+                                        Evet
+                                        <input name="WantShareHisExperience" type="radio" value="true" />
+                                        Hayır
+                                        <input name="WantShareHisExperience" type="radio" value="false" />
+                                    </div>
+                                    <span name="WantShareHisExperience" class="text-danger" />
+                                    <span class="help-block">
+                                        Uygun görürseniz evet'i işaretleyin. Yayınlanan deneyimler tümüyle anonimleştirilecek ve yazanın kimliğini ve kurumun kimliğini ifşa etmeyecek şekilde düzenlenecektir. Bunun amacı, deneyiminizden benzer durumda olan kişilerin de yararlanmasını sağlamaktır.
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="Guid" name="Guid" value="" />
+                        <input type="hidden" id="AppealState" name="AppealState" value="1" />
+                    </div>
+                    <div class="form-actions right">
+                        <button type="submit" class="btn blue">
+                            <i class="fa fa-check"></i> Gönder
+                        </button>
+                    </div>
+                </form>
+                <!-- END FORM-->
+            </div>
+        </div>
+
+
+
+
+
+        <footer>
+            <p>&copy; 2016 - GotFired</p>
+        </footer>
+    </div>
+    <script src="assets/custom/js/vendors/jquery-2.0.0.min.js"></script>
+    <script src="Scripts/bootstrap-datepicker.js"></script>
+    <!--<script src="Scripts/moment.min.js"></script>
+    <script src="Scripts/bootstrap-datetimepicker.min.js"></script>-->
+    <script type="text/javascript">
+        document.onreadystatechange = function () {
+
+            if (document.readyState == "complete") {
+                var xmlhttp = new XMLHttpRequest();
+
+                xmlhttp.onreadystatechange = function () {
+                    if (xmlhttp.readyState == XMLHttpRequest.DONE) {
+                        if (xmlhttp.status == 200) {
+                            var data = JSON.parse(xmlhttp.response);
+                            console.log(data);
+                            document.getElementsByName("Guid")[0].value = data.guid;
+                            //insertOptions("DeclaredTerminationReasonID", data.declaredTerminationReasons);
+                            addCheckboxes(data.declaredTerminationReasons);
+                            insertOptions("CityID", data.cities);
+                            insertOptions("SupportedByID", data.supportedBys);
+                            insertOptions("DismissalState", data.dismissalStates);
+                            insertOptions("AgeInterval", data.ageIntervals);
+                            insertOptions("Gender", data.genders);
+                            insertOptions("EducationState", data.educationStates);
+                            insertOptions("EmploymentDurationSince", data.employmentDurations);
+                            insertOptions("EmployeeCount", data.employeeCounts);
+                        }
+                        else if (xmlhttp.status == 400) {
+                            alert('There was an error 400');
+                        }
+                        else {
+                            alert('something else other than 200 was returned');
+                        }
+                    }
+                };
+                xmlhttp.open("GET", "http://istenatildimdestek.tk/api/v1/dismissalcase/apply", true);
+                xmlhttp.send();
+            }
+        };
+        function insertOptions(tag, myOptions) {
+            var select = document.getElementById(tag);
+            for (index in myOptions) {
+                console.log(index.ID);
+                select.options[select.options.length] = new Option(myOptions[index].Name, myOptions[index].ID);
+            }
+        }
+        function addCheckboxes(declaredTerminationReasons) {
+            var container = document.getElementById('cbList');
+            var ul = document.createElement('ul');
+            for (index in declaredTerminationReasons) {
+                console.log(index);
+                var li = document.createElement('li');
+                var checkbox = document.createElement('input');
+                checkbox.type = "radio";
+                checkbox.name = "radioBtn";
+                checkbox.value = declaredTerminationReasons[index].ID;
+                checkbox.id = declaredTerminationReasons[index].ID;
+
+                var label = document.createElement('label')
+                label.htmlFor = declaredTerminationReasons[index].ID;
+                label.appendChild(document.createTextNode(declaredTerminationReasons[index].Name));
+                
+                li.appendChild(label);
+                li.appendChild(checkbox);
+                ul.appendChild(li);
+            }
+            var li = document.createElement('li');
+            
+            var input = document.createElement('input');
+            input.type = "text";
+            input.name = "OtherDeclaredTerminationReason";
+            input.style.marginLeft = "3px";
+            input.onkeyup = function (evt) {
+                var ele = document.getElementsByName("radioBtn");
+                for (var i = 0; i < ele.length; i++)
+                    ele[i].checked = false;
+            };
+            var label = document.createElement('label');
+            label.htmlFor = "OtherDeclaredTerminationReason";
+            
+            label.appendChild(document.createTextNode("Diğer"));
+            
+            li.appendChild(label);
+            li.appendChild(input);
+            ul.appendChild(li);
+
+            container.appendChild(ul);
+        }
+
+        $("#applyForm").submit(function (event) {
+            // Cancels the form's submit action.
+            event.preventDefault();
+            $.ajax({
+                url: 'http://istenatildimdestek.tk/api/v1/dismissalcase/apply',
+                method: 'POST',
+                data: $('#applyForm').serialize(),                 // Serialize the form data
+                success: function (data) {                        // If 200 OK
+                    alert('Talebiniz başarıyla alındı. En kısa zamanda sizle iletişime geçeceğiz.');
+                },
+                error: function (xhr, text, error) {              // If 40x or 50x; errors
+                    alert('Kaydınız sırasında bir hata ile karşılaştık. bilgi@plazaeylem.org adresine bilgilendirme yaparsanız memnun oluruz.');
+                }
+            });
+        });
+        $('#EmploymentTerminationDate').datepicker()
+
+    </script>
+
+</body>
+</html>

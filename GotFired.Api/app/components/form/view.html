@@ -1,0 +1,219 @@
+﻿
+<div class="col-md-7">
+    <div class="portlet box blue-hoki">
+        <div class="portlet-title">
+            <div class="caption">
+                <i class="fa fa-gift"></i>Yazışmalar
+            </div>
+            <div class="tools">
+                <a href="javascript:;" class="collapse" data-original-title="" title=""> </a>
+            </div>
+        </div>
+        <div class="portlet-body form">
+            <form action="#" class="form-horizontal">
+                <div class="form-body">
+                    <div class="timeline">
+                        <!-- TIMELINE ITEM -->
+                        <div class="timeline-item" ng-repeat="comment in vm.data.Comments">
+                            <div class="timeline-badge">
+                                <img class="timeline-badge-userpic" src="">
+                            </div>
+                            <div class="timeline-body">
+                                <div class="timeline-body-arrow"> </div>
+                                <div class="timeline-body-head">
+                                    <div class="timeline-body-head-caption">
+                                        <a href="javascript:;" class="timeline-body-title font-blue-madison">{{comment.UserName}}</a>
+                                        <span class="timeline-body-time font-grey-cascade">{{comment.CreatedDate  | date:'dd.MM.yyyy HH:mm'}}</span>
+                                    </div>
+                                </div>
+                                <div class="timeline-body-content">
+                                    <span class="font-grey-cascade" ng-bind-html="comment.Text">
+                                        
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- END TIMELINE ITEM -->
+                    </div>
+
+                    <div ng-if="vm.showAnswer">
+                        <div class="row" style="margin-bottom:10px">
+                            
+                            <div class="col-md-9">
+                                <select class="form-control"
+                                        ng-model="vm.selectedAnswerTemplate"
+                                        ng-options="answerTemplate.ID as answerTemplate.Name for answerTemplate in vm.answerTemplates"></select>
+                            </div>
+                            <div class="col-md-3">
+                                <button type="button" class="btn btn-primary" ng-click="vm.getAnswerTemplate()">Yapıştır</button>
+                            </div>
+                            
+                        </div>
+                        <text-angular ng-model="vm.data.answer.Text"></text-angular>
+                        <button type="button" class="btn dark btn-outline" ng-click="vm.cancel()">Vazgeç</button>
+                        <button type="button" class="btn green" ng-disabled="vm.isDisabled" ng-click="vm.answer()">Gönder</button>
+                    </div>
+                </div>
+                <div class="form-actions" ng-if="!vm.showAnswer">
+                    <div class="row">
+                        <div class="col-md-offset-3 col-md-8">
+                            <a class="btn green" ng-click="vm.showAnswerEditor()">Cevap Yaz</a>
+                            <!--<a class="btn green" ng-click="vm.openModal('lg')">Cevap Yaz</a>-->
+                            <a class="btn default" ng-click="vm.makeRead()">Okundu Olarak İşaretle</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="portlet box blue-hoki">
+        <div class="portlet-title">
+            <div class="caption">
+                <i class="fa fa-gift"></i>Değerlendirme
+            </div>
+            <div class="tools">
+                <a href="javascript:;" class="collapse" data-original-title="" title=""> </a>
+            </div>
+        </div>
+        <div class="portlet-body form">
+                <div class="form-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mt-element-ribbon bg-grey-steel">
+                                <div class="ribbon ribbon-color-danger">Etiketler</div>
+                                <p class="ribbon-content util-btn-margin-bottom-5">
+                                    <button class="btn yellow" style="margin-right:1px" ng-repeat="item in vm.Tags" ng-click="vm.addTag(item)">
+                                        {{item.Name}}
+                                    </button>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mt-element-ribbon bg-grey-steel">
+                                <div class="ribbon ribbon-color-primary">Seçilen Etiketler</div>
+                                <p class="ribbon-content util-btn-margin-bottom-5">
+
+                                    <button class="btn purple"  style="margin-right:1px" ng-repeat="item in vm.data.DismissalCaseTags" ng-click="vm.removeTag(item)">
+                                        <i class="fa fa-times"></i> {{item.Name}}
+                                    </button>
+                                </p>
+                            </div>
+
+                        </div>
+                        <!--<form name="evalForm">-->
+                    </div>
+                </div>
+                <!--<div class="form-actions">
+                    <div class="row">
+                        <div class="col-md-offset-3 col-md-8">
+                            <button type="submit" ng-click="vm.evaluate()" class="btn btn-primary">Kaydet</button>
+                        </div>
+                    </div>
+                </div>-->
+            <!--</form>-->
+        </div>
+       
+    </div>
+    <div class="portlet box blue-hoki">
+        <div class="portlet-title">
+            <div class="caption">
+                <i class="fa fa-gift"></i>Notlar
+            </div>
+            <div class="tools">
+                <a href="javascript:;" class="collapse" data-original-title="" title=""> </a>
+            </div>
+        </div>
+        <div class="portlet-body form">
+
+
+            <div class="form-body">
+                <div class="form-group">
+                    <textarea class="form-control" style="width:100%; height:250px" row="10" ng-model="vm.data.Notes"></textarea>
+                </div>
+            </div>
+            <div class="form-actions">
+                <div class="row">
+                    <div class="col-md-offset-3 col-md-8">
+                        <a class="btn green" ng-click="vm.postNotes()">Kaydet</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<div class="col-md-5">
+    <div class="portlet box blue">
+        <div class="portlet-title">
+            <div class="caption">
+                <i class="fa fa-gift"></i>Vaka
+            </div>
+            <div class="tools">
+                <a href="javascript:;" class="collapse" data-original-title="" title=""> </a>
+            </div>
+        </div>
+        <div class="portlet-body">
+            <dl>
+                <dt>Adı Soyadı</dt>
+                <dd>{{vm.data.FullName}}</dd>
+                <dt>Yaş Aralığı:</dt>
+                <dd>{{vm.data.AgeIntervalName}}</dd>
+                <dt>Cinsiyet</dt>
+                <dd>{{vm.data.GenderName}}</dd>
+                <dt>Eğitim Durumu</dt>
+                <dd>{{vm.data.EducationStateName}}</dd>
+                <dt>Mail Adresi</dt>
+                <dd>{{vm.data.EmailAddress}}</dd>
+                <dt>Telefon Numarası</dt>
+                <dd>{{vm.data.PhoneNumber}}</dd>
+                <dt>Çalışan Kişi Sayısı</dt>
+                <dd>{{vm.data.EmployeeCountName}}</dd>
+                <dt>İş Yerinin Bulunduğu Şehir</dt>
+                <dd>{{vm.data.CityName}}</dd>
+                <dt>Şirket Sektörü</dt>
+                <dd>{{vm.data.CompanySectorName}}</dd>
+                <dt>Şirket Hakkında Bilgiler</dt>
+                <dd>{{vm.data.CompanyDescription}}</dd>
+
+                <dt>İşten Ayrılma Tarihi</dt>
+                <dd>{{vm.data.EmploymentTerminationDate | date:'dd/MM/yyyy'}}</dd>
+                <dt>Çalışma Süresi</dt>
+                <dd>{{vm.data.EmploymentDurationSinceName}}</dd>
+                <dt>Şirket Sektörü</dt>
+                <dd>{{vm.data.CompanySectorName}}</dd>
+                <dt>İmzalanan Belgeler</dt>
+                <dd>{{vm.data.SignedDocuments}}</dd>
+
+                <dt>İşten Atılma Durumu</dt>
+                <dd>{{vm.data.DismissalStateName}}</dd>
+                <dt>Bildirilen Sebep</dt>
+                <dd>{{vm.data.DeclaredTerminationReasonName}}</dd>
+                <dt>SGK İşten Çıkarma Nedeni</dt>
+                <dd>{{vm.data.SGKTerminationReasonName}}</dd>
+                <dt>Destek Gördünüz mü?</dt>
+                <dd>
+                    <ul>
+                        <li ng-repeat="opt in vm.data.SupportedByNames">
+                            {{ opt }}
+                        </li>
+                    </ul>
+                </dd>
+                <dt>Detay</dt>
+                <dd>{{vm.data.DetailedExperience}}</dd>
+                <dt>Ek Bilgiler</dt>
+                <dd>{{vm.data.AdditionalInfo}}</dd>
+                <dt>Blogda paylaşılabilir mi?</dt>
+                <dd>{{vm.data.WantShareHisExperienceString}}</dd>
+            </dl>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+

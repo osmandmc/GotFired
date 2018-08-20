@@ -1,0 +1,48 @@
+﻿<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <h3 class="form-section">Kullanıcılar</h3>
+            </div>
+            <div class="portlet-body no-space">
+                <a href="#/user/create" class="btn btn-sm btn-default btn-circle">Oluştur</a>
+                <div class="table-container">
+                    <div class="dataTables_wrapper dataTables_extended_wrapper no-footer">
+                        <div class="row">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover no-footer">
+                                    <thead>
+                                        <tr class="heading">
+                                            <th class="sorting" tabindex="0">Kullanıcı Adı</th>
+                                            <th class="sorting" tabindex="0">Roller</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="item in vm.data" role="row">
+                                            <td>{{item.UserName}}</td>
+                                            <td>{{item.RoleNames}}</td>
+                                            <td>
+                                                <a href="#/user/edit/{{item.UserId}}" class="btn btn-sm btn-default btn-circle btn-editable">
+                                                    <i class="fa fa-pencil"></i>
+                                                </a>
+                                                <a href="#/user/password/{{item.UserId}}" class="btn btn-sm btn-default btn-circle btn-editable">
+                                                    <i class="fa fa-clone"></i>
+                                                </a>
+                                                <a href="#/user/delete/{{item.UserId}}" class="btn btn-sm btn-default btn-circle btn-editable">
+                                                    <i class="fa fa-remove"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <my-paging paging-data="vm.pagingData" paging-func="vm.listUser"></my-paging>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End: life time stats -->
+        </div>
+    </div>
+</div>

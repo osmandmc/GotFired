@@ -1,0 +1,40 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Giriş Yap</title>
+	<meta charset="utf-8" />
+</head>
+<body>
+    login
+    <input type="text" name="username"/>
+    <input type="password" name="password"/>
+    <button type="button" onclick="postLogin()">Giriş Yap</button>
+    <script type="text/javascript">
+        function postLogin() {
+            var xmlhttp = new XMLHttpRequest();
+            var params = "grant_type=password" +
+                            "&username" + document.getElementsByName("username")[0].value +
+                            "&password" + document.getElementsByName("password")[0].value
+            xmlhttp.onreadystatechange = function () {
+                if (xmlhttp.readyState == XMLHttpRequest.DONE) {
+                    if (xmlhttp.status == 200) {
+                        localStorage["access_token"] = xmlhttp.responseText.access_token;
+                        console.log(xmlhttp);
+                        console.log(xmlhttp.responseText);
+                        window.location.href = window.location.origin;
+                    }
+                    else if (xmlhttp.status == 400) {
+                        alert('There was an error 400');
+                    }
+                    else {
+                        alert('something else other than 200 was returned');
+                    }
+                }
+            };
+            xmlhttp.open("POST", "http://istenatildimdestek.tk/api/v1/token", true);
+            xmlhttp.send(params);
+        }
+
+    </script>
+</body>
+</html>

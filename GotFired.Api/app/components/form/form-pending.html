@@ -1,0 +1,76 @@
+﻿<div class="row">
+    <div class="col-md-12">
+        <!--<div class="note note-danger">
+            <p> NOTE: The below datatable is not connected to a real database so the filter and sorting is just simulated for demo purposes only. </p>
+        </div>-->
+        <!-- Begin: life time stats -->
+        <div class="portlet light">
+            <div class="portlet-title">
+               <h3 class="form-section">{{vm.data.header}}</h3>                 
+                <!--<div class="caption">
+                    <i class="fa fa-shopping-cart"></i>Order Listing
+                </div>-->
+                <div class="actions">
+               
+                </div>
+            </div>
+            <div class="portlet-body no-space">
+                <div class="table-container">
+                    <div class="dataTables_wrapper dataTables_extended_wrapper no-footer">
+                        <div class="row">
+                            
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover no-footer">
+                                    <thead>
+                                        <tr class="heading">
+                                            <!--<th width="1%" class="sorting_disabled" rowspan="1" colspan="1" aria-label="">
+                                                <label class="mt-checkbox mt-checkbox-single mt-checkbox-outline">
+                                                    <input type="checkbox" class="group-checkable" data-set="#sample_2 .checkboxes">
+                                                    <span></span>
+                                                </label>
+                                            </th>-->
+                                            <th class="sorting" tabindex="0">Vaka No</th>
+                                            <th class="sorting" tabindex="0">Adı Soyadı</th>
+                                            <th class="sorting" tabindex="0">Email</th>
+                                            <th class="sorting" tabindex="0">Talep Tarihi</th>
+                                            <th class="sorting" tabindex="0">Cevaplayan Kişi</th>
+                                            <th class="sorting" tabindex="0">Cevaplanma Tarihi</th>
+                                            <th class="sorting" tabindex="0"></th>
+                                            
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="item in vm.data" role="row" class="even" ng-style="item.AppealState == '1' ? { 'font-weight':'bold' } : { 'width': '0%' }">
+                                            <!--AppealState =1 : Bekleyen vaka-->
+                                            <!--<td><label class="mt-checkbox mt-checkbox-single mt-checkbox-outline"><input name="id[]" type="checkbox" class="checkboxes" value="4"><span></span></label></td>-->
+                                            <td><!--{{$index+1}}--->{{item.Id}}</td>
+                                            <td>{{item.ApplicantFullName}}</td>
+                                            <td>{{item.ApplicantEmail}}</td>
+                                            <td>{{item.CreatedDate | date:'dd/MM/yyyy'}}</td>
+                                            <td>{{item.CommentedBy}}</td>
+                                            <td>{{item.CommentDate | date:'dd/MM/yyyy'}}</td>
+                                            <td>
+                                               <a href="#/form/view/{{item.Id}}" class="btn btn-sm btn-default btn-circle btn-editable">
+                                                    <i class="fa fa-pencil"></i>
+                                                </a>
+                                               
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <my-paging paging-data="vm.pagingData" paging-func="vm.listformAnswered"></my-paging>
+                            <!--<div class="row">
+                                <div class="col-md-8 col-sm-12">
+                                    <div class="dataTables_paginate paging_bootstrap_extended"><div class="pagination-panel"> Page <a href="#" class="btn btn-sm default prev disabled"><i class="fa fa-angle-left"></i></a><input type="text" class="pagination-panel-input form-control input-sm input-inline input-mini" maxlenght="5" style="text-align:center; margin: 0 5px;"><a href="#" class="btn btn-sm default next"><i class="fa fa-angle-right"></i></a> of <span class="pagination-panel-total">243</span></div></div><div class="dataTables_length"><label><span class="seperator">|</span>View <select name="datatable_products_length" aria-controls="datatable_products" class="form-control input-xs input-sm input-inline"><option value="10">10</option><option value="20">20</option><option value="50">50</option><option value="100">100</option><option value="150">150</option></select> records</label></div><div class="dataTables_info"><span class="seperator">|</span>Found total 2,430 records</div>
+                                </div>
+                                <div class="col-md-4 col-sm-12"></div>
+                            </div>-->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End: life time stats -->
+        </div>
+    </div>
+</div>

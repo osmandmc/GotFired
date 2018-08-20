@@ -1,0 +1,7 @@
+C:\Users\osman.demirci\source\Workspaces\GF\GotFired\GotFired.Model\bin\Release\GotFired.Model.dll.config
+C:\Users\osman.demirci\source\Workspaces\GF\GotFired\GotFired.Model\bin\Release\GotFired.Model.dll
+C:\Users\osman.demirci\source\Workspaces\GF\GotFired\GotFired.Model\bin\Release\GotFired.Model.pdb
+C:\Users\osman.demirci\source\Workspaces\GF\GotFired\GotFired.Model\obj\Release\GotFired.Model.csprojResolveAssemblyReference.cache
+C:\Users\osman.demirci\source\Workspaces\GF\GotFired\GotFired.Model\obj\Release\GotFired.Model.csproj.CoreCompileInputs.cache
+C:\Users\osman.demirci\source\Workspaces\GF\GotFired\GotFired.Model\obj\Release\GotFired.Model.dll
+C:\Users\osman.demirci\source\Workspaces\GF\GotFired\GotFired.Model\obj\Release\GotFired.Model.pdb

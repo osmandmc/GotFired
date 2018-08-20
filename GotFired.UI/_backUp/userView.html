@@ -1,0 +1,395 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GotFired</title>
+    <link href="assets/global/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="http://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700&subset=all" rel="stylesheet" type="text/css" />
+    <link href="assets/global/plugins/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+    <link href="assets/global/plugins/simple-line-icons/simple-line-icons.min.css" rel="stylesheet" type="text/css" />
+    <link href="assets/global/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <link href="assets/global/plugins/bootstrap-switch/css/bootstrap-switch.min.css" rel="stylesheet" type="text/css" />
+    <!-- END GLOBAL MANDATORY STYLES -->
+    <!-- BEGIN THEME GLOBAL STYLES -->
+    <link href="assets/global/css/components.min.css" rel="stylesheet" id="style_components" type="text/css" />
+    <link href="assets/global/css/components-md.min.css" rel="stylesheet" id="style_components" type="text/css" />
+    <link href="assets/global/css/plugins-md.min.css" rel="stylesheet" type="text/css" />
+    <!-- END THEME GLOBAL STYLES -->
+    <!-- BEGIN THEME LAYOUT STYLES -->
+    <link href="assets/layouts/layout4/css/layout.min.css" rel="stylesheet" type="text/css" />
+
+    <link href="assets/layouts/layout4/css/themes/light.min.css" rel="stylesheet" type="text/css" id="style_color" />
+    <link href="assets/layouts/layout4/css/custom.min.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+    <div class="container body-content">
+        <div class="col-md-6">
+            <div class="portlet box blue">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-gift"></i>Vaka
+                    </div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse" data-original-title="" title=""> </a>
+                    </div>
+                </div>
+                <div class="portlet-body form">
+                    <!-- BEGIN FORM-->
+
+                    <form action="#" class="form-horizontal">
+                        <div class="form-body">
+                            <div class="form-group">
+                                <label class="control-label col-md-4">Adı Soyadı</label>
+                                <div class="col-md-8">
+                                    <p id="FullName" class="form-control-static"> </p>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-4">Yaş Aralığı:</label>
+                                <div class="col-md-8">
+                                    <p id="AgeInterval" class="form-control-static">  </p>
+                                    <!--<select ng-model="vm.data.AgeInterval"
+                                    ng-options="ageInterval.id as ageInterval.name for ageInterval in vm.data.AgeIntervalList" ng-change="onchange(vm.data.ageInterval)" class="form-control"></select>-->
+                                </div>
+                            </div>
+
+                            <label class="control-label col-md-4">Cinsiyet</label>
+                            <div class="col-md-8">
+                                <p id="Gender" class="form-control-static"></p>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="control-label col-md-4">Eğitim Durumu</label>
+                                <div class="col-md-8">
+                                    <p id="EducationState" class="form-control-static"></p>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-4">Mail Adresi</label>
+                                <div class="col-md-8">
+                                    <p id="EmailAddress" class="form-control-static"></p>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="PhoneNumber" class="control-label col-md-4">Telefon Numarası</label>
+                                <div class="col-md-8">
+                                    <p id="PhoneNumber" class="form-control-static"></p>
+                                </div>
+                            </div>
+
+
+
+                            <div class="form-group">
+                                <label class="control-label col-md-4">Çalışan Kişi Sayısı</label>
+                                <div class="col-md-8">
+                                    <p id="EmployeeCount" class="form-control-static"></p>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="CityID" class="control-label col-md-4">İş Yerinin Bulunduğu Şehir</label>
+                                <div class="col-md-8">
+                                    <p id="CityId" class="form-control-static"></p>
+                                    <!--<select ng-model="vm.data.CityId"
+                                    ng-options="city.Id as city.Name for city in vm.data.Cities" ng-change="onchange(vm.data.CityID)" class="form-control"></select>-->
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="CompanySectorId" class="control-label col-md-4">Şirket Sektörü</label>
+                                <div class="col-md-8">
+                                    <p id="CompanySectorId" class="form-control-static"></p>
+                                    <!--<select ng-model="vm.data.CompanySectorId"
+                                    ng-options="companySector.Id as companySector.Name for companySector in vm.data.CompanySectors" ng-change="onchange(vm.data.CompanySectorId)" class="form-control"></select>-->
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-4">Şirket Hakkında Bilgiler</label>
+                                <div class="col-md-8">
+                                    <p id="CompanyDescription" class="form-control-static"> </p>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="control-label col-md-4">İşten Ayrılma Tarihi</label>
+                                <div class="col-md-8">
+                                    <p id="EmploymentTerminationDate" class="form-control-static"></p>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="control-label col-md-4">Çalışma Süresi</label>
+                                <div class="col-md-8">
+                                    <p id="EmploymentDurationSince" class="form-control-static"></p>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="SignedDocuments" class="control-label col-md-4">İmzalanan Belgeler</label>
+                                <div class="col-md-8">
+                                    <p id="SignedDocuments" class="form-control-static"></p>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="DismissalState" class="control-label col-md-4">İşten Atılma Durumu</label>
+                                <div class="col-md-8">
+                                    <p id="DismissalState" class="form-control-static"></p>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-4">Bildirilen Sebep</label>
+                                <div class="col-md-8">
+                                    <p id="DeclaredTerminationReasonId" class="form-control-static"></p>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-4">Detay</label>
+                                <div class="col-md-8">
+                                    <p id="DetailedExperience" class="form-control-static"></p>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="control-label  col-md-4">Ek Bilgiler</label>
+                                <div class="col-md-8">
+                                    <p id="AdditionalInfo" class="form-control-static"></p>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="WantShareHisExperience" class="control-label col-md-4">Blogda paylaşılabilir mi?</label>
+                                <div class="col-md-8">
+                                    <p id="WantShareHisExperience" class="form-control-static"></p>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </form>
+                    <!-- END FORM-->
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="portlet box blue-hoki">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-gift"></i>Yazışmalar
+                    </div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse" data-original-title="" title=""> </a>
+                    </div>
+                </div>
+                <div class="portlet-body form">
+
+                    <form action="#" class="form-horizontal">
+                        <div class="form-body">
+                            <div id="timeline" class="timeline">
+                            </div>
+
+                        </div>
+                        <div class="form-actions">
+                            <div class="row">
+                                <div class="col-md-offset-3 col-md-8">
+                                    <a id="answer" class="btn green" data-toggle="modal" data-target="#myModal">Cevap Yaz</a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+
+        <hr />
+        <footer>
+            <p>&copy; 2016 - GotFired</p>
+        </footer>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="answerModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form id="myForm">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title">Mail Oluştur</h4>
+                    </div>
+                    <div class="modal-body">
+                        <input id="DismissalCaseId" name="DismissalCaseId" type="hidden" />
+                        <input id="UserName" name="UserName" type="hidden" />
+                        <input id="CreateDate" name="CreateDate" type="hidden" />
+                        <input id="Guid" name="Guid" type="hidden" />
+                        <textarea name="Text" class="form-control ng-pristine ng-valid ng-empty ng-touched" style="width:100%; min-height:400px" row="10"></textarea>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button name="close" type="button" class="btn dark btn-outline" data-dismiss="modal">Vazgeç</button>
+                        <button type="submit" class="btn green">Gönder</button>
+                    </div>
+                </form>
+            </div>
+            
+        </div>
+    </div>
+
+    <script src="assets/custom/js/vendors/jquery-2.0.0.min.js"></script>
+    <script src="Scripts/tether/tether.min.js"></script>
+    <script src="assets/custom/js/vendors/bootstrap.min.js"></script>
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+            $("#answer").click(function () {
+                $("#answerModal").modal();
+            });
+            $("#myForm").submit(function (e) {
+               
+                console.log("sss");
+                var url = "http://istenatildimdestek.tk/api/v1/dismissalcase/useranswer/"; // the script where you handle the form input.
+
+                $.ajax({
+                    type: "POST",
+                    url: url,
+                    data: $("#myForm").serialize(), // serializes the form's elements.
+                    success: function (data) {
+                        console.log(data);
+                        insertComment(data);
+                        $("#answerModal").modal('hide');
+                    }
+                });
+                 e.preventDefault();
+                // avoid to execute the actual submit of the form.
+            });
+        });
+       
+        //var modal = document.getElementById('answerModal');
+
+        //// Get the button that opens the modal
+        //var btn = document.getElementById("answer");
+
+        //// Get the <span> element that closes the modal
+        //var span = document.getElementsByClassName("close")[0];
+
+        //// When the user clicks on the button, open the modal
+        //btn.onclick = function () {
+        //    modal.style.display = "block";
+        //}
+
+        //// When the user clicks on <span> (x), close the modal
+        //span.onclick = function () {
+        //    modal.style.display = "none";
+        //}
+
+        //// When the user clicks anywhere outside of the modal, close it
+        //window.onclick = function (event) {
+        //    if (event.target == modal) {
+        //        modal.style.display = "none";
+        //    }
+        //}
+        document.onreadystatechange = function () {
+
+            if (document.readyState == "complete") {
+                var xmlhttp = new XMLHttpRequest();
+
+                xmlhttp.onreadystatechange = function () {
+                    if (xmlhttp.readyState == XMLHttpRequest.DONE) {
+                        if (xmlhttp.status == 200) {
+                            //document.getElementById("myDiv").innerHTML = xmlhttp.responseText;
+                            var data = JSON.parse(xmlhttp.responseText);
+                            console.log(data);
+                            document.getElementById('DismissalCaseId').value = data.Id;
+                            document.getElementById('Guid').value = data.Guid;
+                            document.getElementById('UserName').value = data.FullName;
+
+                            insertText('FullName', data.FullName);
+                            insertText('AgeInterval', data.AgeInterval);
+                            insertText('Gender', data.Gender);
+                            insertText('EducationState', data.EducationState);
+                            insertText('EmailAddress', data.EmailAddress);
+                            insertText('PhoneNumber', data.PhoneNumber);
+                            insertText('EmployeeCount', data.EmployeeCount);
+                            insertText('CityId', data.CityName);
+                            insertText('CompanySectorId', data.CompanySectorId);
+                            insertText('CompanyDescription', data.CompanyDescription);
+                            insertText('EmploymentTerminationDate', data.EmploymentTerminationDate);
+                            insertText('EmploymentDurationSince', data.EmploymentDurationSince);
+                            insertText('SignedDocuments', data.SignedDocuments);
+                            insertText('DeclaredTerminationReasonId', data.DeclaredTerminationReasonName);
+                            insertText('DetailedExperience', data.DetailedExperience);
+                            insertText('WantShareHisExperience', data.WantShareHisExperienceString);
+                            insertComments(data.Comments);
+                        }
+                        else if (xmlhttp.status == 400) {
+                            alert('There was an error 400');
+                        }
+                        else {
+                            alert('something else other than 200 was returned');
+                        }
+                    }
+                };
+                var guid = location.search.substring(1).split("=")[1];
+                xmlhttp.open("GET", "http://istenatildimdestek.tk/api/v1/dismissalcase/userview/" + guid, true);
+                xmlhttp.send();
+            }
+        };
+        function insertText(tag, text) {
+            document.getElementById(tag).innerHTML = text;
+        }
+        function insertComment(comment) {
+            var timeline = document.getElementById('timeline');
+            var timelineItem = document.createElement('div');
+            timelineItem.className += " timeline-item";
+            var timelineBody = document.createElement('div');
+            timelineBody.className += " timeline-body";
+            var timelineArrow = document.createElement('div');
+            timelineArrow.className += " timeline-body-arrow";
+            var timelineBodyHead = document.createElement('div');
+            timelineBodyHead.className += " timeline-body-head";
+            var timelineBodyHeadCaption = document.createElement('div');
+            timelineBodyHeadCaption.className += "timeline-body-head-caption";
+            var timelineBodyHeadUserName = document.createElement('a');
+            timelineBodyHeadUserName.className += "timeline-body-title font-blue-madison";
+            var timelineBodyHeadDate = document.createElement('span');
+            timelineBodyHeadDate.className += "timeline-body-time font-grey-cascade";
+            var timelineBodyContent = document.createElement('div');
+            timelineBodyContent.className += "timeline-body-content";
+            var timelineBodyContentText = document.createElement('span');
+            timelineBodyContentText.className += "font-grey-cascade";
+
+            var text = document.createTextNode(comment.Text);
+            var userName = document.createTextNode(comment.UserName);
+            var createdDate = document.createTextNode(comment.CreatedDate);
+
+            //head
+            timelineBodyHeadDate.appendChild(createdDate);
+            timelineBodyHeadUserName.appendChild(userName);
+            timelineBodyHeadCaption.appendChild(timelineBodyHeadUserName);
+            timelineBodyHeadCaption.appendChild(timelineBodyHeadDate);
+            timelineBodyHead.appendChild(timelineBodyHeadCaption);
+
+            //content
+            timelineBodyContentText.appendChild(text);
+            timelineBodyContent.appendChild(timelineBodyContentText);
+
+            //body
+            timelineBody.appendChild(timelineArrow);
+            timelineBody.appendChild(timelineBodyHead);
+            timelineBody.appendChild(timelineBodyContent);
+
+            timelineItem.appendChild(timelineBody);
+            timeline.appendChild(timelineItem);
+        }
+        function insertComments(comments) {
+            var timeline = document.getElementById('timeline');
+
+            for (var i = 0; i < comments.length; i++) {
+
+                insertComment(comments[i]);
+            }
+        }
+    </script>
+
+</body>
+</html>
