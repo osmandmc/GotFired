@@ -9,7 +9,7 @@ GotFired ("İşten Atıldım Destek") collects dismissal (wrongful termination) 
 ## Commands
 
 ```sh
-docker compose up --build          # API :8080 + SQL Server :1433 + Mailpit :8025; seeds admin/admin123 on first start
+docker compose up --build          # API :8080 + SQL Server :1433 + Mailpit :8025; seeds dev-admin/admin123
 dotnet build GotFired.slnx
 dotnet tool restore                # dotnet-ef from dotnet-tools.json
 dotnet ef migrations add <Name> --project GotFired.DAL --startup-project GotFired.DAL   # DB from $GOTFIRED_CONNECTION

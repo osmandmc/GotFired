@@ -1,5 +1,6 @@
 # Local development stack: API + SQL Server + Mailpit (catches outgoing email, UI on http://localhost:8025).
-# The API seeds an "admin" user (password admin123) and sample data on first start.
+# The API seeds a "dev-admin" user (password admin123) on start, and sample data into an empty database.
+# To use a production backup instead, see "Local copy of a backup" in db/README.md.
 services:
   api:
     build: .
@@ -9,6 +10,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__GotFired: "Server=sql;Database=gotfired;User ID=sa;Password=Dev_Passw0rd!;TrustServerCertificate=True"
       Smtp__Host: mailpit
+      Seed__AdminUserName: dev-admin   # distinct name: a restored backup has a real "admin" user
     depends_on:
       sql:
         condition: service_healthy

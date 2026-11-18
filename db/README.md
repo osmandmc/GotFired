@@ -43,6 +43,24 @@ The production database moves from the old SQL Server 2008 R2 (Plesk) to a new S
 
 The old database on the 2008 R2 server is untouched by this procedure, so rolling back to it loses anything written since the move. To roll back *with* that data, point the old app at the new database. The upgrade only adds columns and tables, so the old app keeps working. This requires `Identity__PasswordHashCompatibilityV2=true` from the start: otherwise every user who logged in to the new app gets a v3 password hash, which the old app cannot verify. Remove the setting once rollback is no longer needed.
 
+## Local copy of a backup
+
+Loads a backup into the `docker compose` stack. The data stays in the `sqldata` volume; it contains personal data, so remove it with `docker compose down -v` when done. Outgoing email goes to Mailpit (http://localhost:8025), never to applicants.
+
+```sh
+docker compose up -d --wait sql                     # SQL only, so the API does not create an empty database first
+unzip db/<backup>.zip -d /tmp/gotfired-bak
+docker compose cp /tmp/gotfired-bak/<backup> sql:/var/opt/mssql/gotfired.bak && rm -rf /tmp/gotfired-bak
+docker compose exec -u root sql chown mssql /var/opt/mssql/gotfired.bak
+docker compose exec sql /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P 'Dev_Passw0rd!' -b -Q "
+  RESTORE DATABASE gotfired FROM DISK='/var/opt/mssql/gotfired.bak'
+  WITH MOVE 'gotfired' TO '/var/opt/mssql/data/gotfired.mdf', MOVE 'gotfired_log' TO '/var/opt/mssql/data/gotfired_log.ldf', REPLACE;
+  ALTER DATABASE gotfired SET COMPATIBILITY_LEVEL = 160;"
+docker compose exec -T sql /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P 'Dev_Passw0rd!' -d gotfired -b < db/upgrade-legacy-database.sql
+docker compose exec sql rm /var/opt/mssql/gotfired.bak
+docker compose up -d --build                        # API + Mailpit; log in as dev-admin / admin123
+```
+
 ## Files
 
 - `upgrade-legacy-database.sql`: the one-time upgrade above.
