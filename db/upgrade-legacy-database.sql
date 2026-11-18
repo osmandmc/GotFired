@@ -18,6 +18,17 @@ SET ANSI_NULLS ON;
 BEGIN TRANSACTION;
 
 ------------------------------------------------------------------------------------------------
+-- DismissalCases.SGKTerminationReasonID: in production this column exists without the foreign key and
+-- index that EF6 migration "sgk" defines (and the EF Core model expects). Fails if orphaned values exist.
+------------------------------------------------------------------------------------------------
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_dbo.DismissalCases_dbo.SGKTerminationReasons_SGKTerminationReasonID')
+    ALTER TABLE dbo.DismissalCases WITH CHECK ADD CONSTRAINT [FK_dbo.DismissalCases_dbo.SGKTerminationReasons_SGKTerminationReasonID]
+        FOREIGN KEY (SGKTerminationReasonID) REFERENCES dbo.SGKTerminationReasons (ID);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID('dbo.DismissalCases') AND name = 'IX_SGKTerminationReasonID')
+    CREATE INDEX IX_SGKTerminationReasonID ON dbo.DismissalCases (SGKTerminationReasonID);
+GO
+
+------------------------------------------------------------------------------------------------
 -- AspNetUsers
 ------------------------------------------------------------------------------------------------
 IF COL_LENGTH('dbo.AspNetUsers', 'NormalizedUserName') IS NULL
@@ -30,10 +41,11 @@ IF COL_LENGTH('dbo.AspNetUsers', 'LockoutEnd') IS NULL
     ALTER TABLE dbo.AspNetUsers ADD LockoutEnd datetimeoffset NULL;
 GO
 
--- Core Identity looks users up by the upper-invariant normalized name. UPPER() matches that for
--- ASCII user names; check non-ASCII names after running (see the query at the end).
-UPDATE dbo.AspNetUsers SET NormalizedUserName = UPPER(UserName) WHERE NormalizedUserName IS NULL;
-UPDATE dbo.AspNetUsers SET NormalizedEmail = UPPER(Email) WHERE NormalizedEmail IS NULL AND Email IS NOT NULL;
+-- Core Identity looks users up by the .NET upper-invariant normalized name. The production database uses
+-- Turkish_CI_AS, where UPPER('i') = 'İ' - that would lock out every user with an "i" in the name. Upper-casing
+-- under a Latin collation matches ToUpperInvariant for ASCII names; non-ASCII names are listed at the end.
+UPDATE dbo.AspNetUsers SET NormalizedUserName = UPPER(UserName COLLATE Latin1_General_CI_AS) WHERE NormalizedUserName IS NULL;
+UPDATE dbo.AspNetUsers SET NormalizedEmail = UPPER(Email COLLATE Latin1_General_CI_AS) WHERE NormalizedEmail IS NULL AND Email IS NOT NULL;
 UPDATE dbo.AspNetUsers SET ConcurrencyStamp = CONVERT(nvarchar(36), NEWID()) WHERE ConcurrencyStamp IS NULL;
 -- Identity v2 stored lockout end as UTC datetime. LockoutEndDateUtc is kept for the old app (rollback).
 IF COL_LENGTH('dbo.AspNetUsers', 'LockoutEndDateUtc') IS NOT NULL
@@ -61,7 +73,7 @@ IF COL_LENGTH('dbo.AspNetRoles', 'ConcurrencyStamp') IS NULL
     ALTER TABLE dbo.AspNetRoles ADD ConcurrencyStamp nvarchar(max) NULL;
 GO
 
-UPDATE dbo.AspNetRoles SET NormalizedName = UPPER(Name) WHERE NormalizedName IS NULL;
+UPDATE dbo.AspNetRoles SET NormalizedName = UPPER(Name COLLATE Latin1_General_CI_AS) WHERE NormalizedName IS NULL;
 UPDATE dbo.AspNetRoles SET ConcurrencyStamp = CONVERT(nvarchar(36), NEWID()) WHERE ConcurrencyStamp IS NULL;
 
 IF EXISTS (SELECT 1 FROM sys.indexes i

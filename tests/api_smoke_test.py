@@ -8,13 +8,15 @@ Usage:  python3 tests/api_smoke_test.py [base_url] [admin_user] [admin_password]
 Defaults match db/tests/legacy-ef6-schema.sql. Optional: MAILPIT_URL=http://localhost:8025 checks sent mail.
 Only standard library. Writes test data; run it against a disposable database.
 """
-import json, os, sys, urllib.parse, urllib.request, urllib.error
+import json, os, sys, time, urllib.parse, urllib.request, urllib.error
 
 BASE = (sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8080").rstrip("/")
 ADMIN, ADMIN_PW = (sys.argv[2:4] + ["legacy-admin", "legacy-pass"][len(sys.argv[2:4]):])[:2]
 USER, USER_PW = (sys.argv[4:6] + ["legacy-user", "legacy-pass"][len(sys.argv[4:6]):])[:2]
 MAILPIT = os.environ.get("MAILPIT_URL")
 failures = []
+RUN = str(int(time.time()))  # unique suffix so the test can be rerun on the same database
+TEMPLATE, NEW_USER = "Smoke " + RUN, "smoke-" + RUN
 
 
 def call(method, path, body=None, token=None, content_type=None):
@@ -105,8 +107,15 @@ for path in ["index/1", "pending/1", "answered/1"]:
     check(f"GET {path}: data + paging", s == 200 and "data" in r and r["paging"]["ItemsPerPage"] == 20, (s, r))
 s, r = call("GET", "/api/v1/dismissalcase/pending/1", token=admin)
 check("pending list contains the new case", s == 200 and any(c["Id"] == case_id for c in r["data"]), r)
-s, r = call("GET", "/api/v1/dismissalcase/view/1", token=admin)
-check("GET view/1 (legacy row, includes)", s == 200 and r.get("CityName") and r.get("SupportedByNames") == ["Sendika"] and len(r.get("Comments", [])) >= 1, (s, r))
+existing = []
+for p in (1, 2):
+    s, r = call("GET", f"/api/v1/dismissalcase/index/{p}", token=admin)
+    existing += [c["Id"] for c in r["data"]] if s == 200 else []
+existing = existing[::-1]  # oldest first: older cases are more likely to have supporters and comments
+views = [call("GET", f"/api/v1/dismissalcase/view/{i}", token=admin) for i in existing[:20]]
+rich = [v for st, v in views if st == 200 and v.get("SupportedByNames") and v.get("Comments")]
+check("GET view/{id} on existing rows (city, supporters, comments via includes)",
+      all(st == 200 for st, _ in views) and rich and all(v.get("CityName") for v in rich), [st for st, _ in views])
 s, r = call("GET", "/api/v1/dismissalcase/view/999999", token=admin)
 check("GET view/missing -> 400 {Message}", s == 400 and r.get("Message") == "model cannot be null", (s, r))
 
@@ -142,11 +151,11 @@ s, _ = call("POST", "/api/v1/dismissalcase/makeRead", {"Id": case_id}, token=adm
 check("POST makeRead", s == 200, s)
 
 # --- admin: answer templates ---------------------------------------------------------------------
-s, _ = call("POST", "/api/v1/answerTemplate/create", {"Name": "Smoke", "Content": "<p>x</p>"}, token=admin)
+s, _ = call("POST", "/api/v1/answerTemplate/create", {"Name": TEMPLATE, "Content": "<p>x</p>"}, token=admin)
 check("answerTemplate create", s == 200, s)
 s, r = call("GET", "/api/v1/answerTemplate/list/1", token=admin)
-check("answerTemplate list", s == 200 and any(t["Name"] == "Smoke" for t in r["data"]), (s, r))
-tid = next(t["ID"] for t in r["data"] if t["Name"] == "Smoke")
+check("answerTemplate list", s == 200 and any(t["Name"] == TEMPLATE for t in r["data"]), (s, r))
+tid = next(t["ID"] for t in r["data"] if t["Name"] == TEMPLATE)
 s, t = call("GET", f"/api/v1/answerTemplate/getById/{tid}", token=admin)
 check("answerTemplate getById", s == 200 and t["Content"] == "<p>x</p>", (s, t))
 t["Content"] = "<p>y</p>"
@@ -160,17 +169,23 @@ s, r = call("GET", "/api/v1/auth/index/1", token=admin)
 check("auth index", s == 200 and r["paging"]["TotalItems"] >= 2 and any(u["UserName"] == ADMIN and u["RoleNames"] == ["admin"] for u in r["data"]), (s, r))
 s, r = call("GET", "/api/v1/auth/getAllRoles", token=admin)
 check("auth getAllRoles", s == 200 and set(r) >= {"admin", "editor", "user"}, (s, r))
-s, _ = call("POST", "/api/v1/auth/create", {"UserName": "smoke-user", "Password": "abcdef", "FriendlyName": "Smoke"}, token=admin)
+s, _ = call("POST", "/api/v1/auth/create", {"UserName": NEW_USER, "Password": "abcdef", "FriendlyName": "Smoke"}, token=admin)
 check("auth create (6-char password, v2 rules)", s == 200, s)
-s, r = call("GET", "/api/v1/auth/index/1", token=admin)
-new_id = next((u["UserId"] for u in r["data"] if u["UserName"] == "smoke-user"), None)
-s, _ = call("POST", "/api/v1/auth/updateUserRoles", {"UserName": "smoke-user", "FriendlyName": "Smoke 2", "UserRoles": ["editor"]}, token=admin)
+new_id, page = None, 1
+while new_id is None:
+    s, r = call("GET", f"/api/v1/auth/index/{page}", token=admin)
+    if s != 200 or not r["data"]:
+        break
+    new_id = next((u["UserId"] for u in r["data"] if u["UserName"] == NEW_USER), None)
+    page += 1
+check("auth index paging finds the new user", new_id is not None, page)
+s, _ = call("POST", "/api/v1/auth/updateUserRoles", {"UserName": NEW_USER, "FriendlyName": "Smoke 2", "UserRoles": ["editor"]}, token=admin)
 check("auth updateUserRoles", s == 200, s)
 s, r = call("GET", f"/api/v1/auth/getUserRoles/{new_id}", token=admin)
 check("auth getUserRoles", s == 200 and r["UserRoles"] == ["editor"] and r["FriendlyName"] == "Smoke 2", (s, r))
-s, _ = call("POST", "/api/v1/auth/changePassword", {"UserName": "smoke-user", "Password": "newpass"}, token=admin)
+s, _ = call("POST", "/api/v1/auth/changePassword", {"UserName": NEW_USER, "Password": "newpass"}, token=admin)
 check("auth changePassword", s == 200, s)
-s, r = login("smoke-user", "newpass")
+s, r = login(NEW_USER, "newpass")
 check("new user logs in with changed password, editor role works", s == 200 and call("GET", "/api/v1/dismissalcase/index/1", token=r["access_token"])[0] == 200, (s, r))
 
 # --- unhandled exception ----------------------------------------------------------------------------

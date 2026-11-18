@@ -10,13 +10,13 @@ SELECT line FROM (SELECT CAST(line AS nvarchar(4000)) COLLATE Latin1_General_BIN
     WHERE t.name NOT IN ('__EFMigrationsHistory', '__MigrationHistory')
     UNION ALL
     SELECT CASE WHEN i.is_primary_key = 1 THEN 'PK ' WHEN i.is_unique = 1 THEN 'UIX ' ELSE 'IX ' END
-           + t.name + ' ' + i.name + ' (' + STRING_AGG(c.name, ',') WITHIN GROUP (ORDER BY ic.key_ordinal) + ')'
+           + t.name + ' ' + i.name + ' (' + STUFF((SELECT ',' + c2.name FROM sys.index_columns ic2
+                 JOIN sys.columns c2 ON c2.object_id = ic2.object_id AND c2.column_id = ic2.column_id
+                 WHERE ic2.object_id = i.object_id AND ic2.index_id = i.index_id ORDER BY ic2.key_ordinal
+                 FOR XML PATH('')), 1, 1, '') + ')'
            + ISNULL(' WHERE ' + CAST(i.filter_definition AS nvarchar(4000)) COLLATE DATABASE_DEFAULT, '')
     FROM sys.tables t JOIN sys.indexes i ON i.object_id = t.object_id
-    JOIN sys.index_columns ic ON ic.object_id = i.object_id AND ic.index_id = i.index_id
-    JOIN sys.columns c ON c.object_id = ic.object_id AND c.column_id = ic.column_id
-    WHERE t.name NOT IN ('__EFMigrationsHistory', '__MigrationHistory')
-    GROUP BY t.name, i.name, i.is_primary_key, i.is_unique, i.filter_definition
+    WHERE t.name NOT IN ('__EFMigrationsHistory', '__MigrationHistory') AND i.index_id > 0
     UNION ALL
     SELECT 'FK ' + OBJECT_NAME(fk.parent_object_id) + ' ' + fk.name + ' (' + COL_NAME(fkc.parent_object_id, fkc.parent_column_id)
            + ') -> ' + OBJECT_NAME(fk.referenced_object_id) + ' ON DELETE ' + fk.delete_referential_action_desc

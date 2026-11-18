@@ -1,6 +1,8 @@
 /*
   TEST FIXTURE ONLY. Recreates the schema that EF6 migration 201808141943456_sgk and ASP.NET Identity 2
-  produced (same types, constraint and index names), plus a little data, so db/upgrade-legacy-database.sql
+  produced (same types, constraint and index names), plus a little data. Matches the 2025-08 production backup:
+  no FK/index on DismissalCases.SGKTerminationReasonID; create the database with COLLATE Turkish_CI_AS and
+  COMPATIBILITY_LEVEL 100 to match production. The user names contain an "i" on purpose (Turkish casing). so db/upgrade-legacy-database.sql
   and the .NET 10 app can be verified without a production backup. Login: legacy-admin / legacy-pass
 */
 CREATE TABLE [dbo].[AnswerTemplates] (
@@ -243,7 +245,6 @@ CREATE INDEX [IX_CityID] ON [dbo].[DismissalCases]([CityID]);
 CREATE INDEX [IX_CompanySectorID] ON [dbo].[DismissalCases]([CompanySectorID]);
 CREATE INDEX [IX_DeclaredTerminationReasonID] ON [dbo].[DismissalCases]([DeclaredTerminationReasonID]);
 CREATE INDEX [IX_CategoryID] ON [dbo].[DismissalCases]([CategoryID]);
-CREATE INDEX [IX_SGKTerminationReasonID] ON [dbo].[DismissalCases]([SGKTerminationReasonID]);
 CREATE INDEX [IX_DismissalCaseId] ON [dbo].[DismissalCaseSupprtedBies]([DismissalCaseId]);
 CREATE INDEX [IX_SupportedById] ON [dbo].[DismissalCaseSupprtedBies]([SupportedById]);
 CREATE INDEX [IX_DismissalCaseID] ON [dbo].[DismissalCaseTags]([DismissalCaseID]);
@@ -260,7 +261,6 @@ ALTER TABLE [dbo].[DismissalCases] ADD CONSTRAINT [FK_dbo.DismissalCases_dbo.Cat
 ALTER TABLE [dbo].[DismissalCases] ADD CONSTRAINT [FK_dbo.DismissalCases_dbo.Cities_CityID] FOREIGN KEY ([CityID]) REFERENCES [dbo].[Cities] ([ID]) ON DELETE CASCADE;
 ALTER TABLE [dbo].[DismissalCases] ADD CONSTRAINT [FK_dbo.DismissalCases_dbo.CompanySectors_CompanySectorID] FOREIGN KEY ([CompanySectorID]) REFERENCES [dbo].[CompanySectors] ([ID]);
 ALTER TABLE [dbo].[DismissalCases] ADD CONSTRAINT [FK_dbo.DismissalCases_dbo.DeclaredTerminationReasons_DeclaredTerminationReasonID] FOREIGN KEY ([DeclaredTerminationReasonID]) REFERENCES [dbo].[DeclaredTerminationReasons] ([ID]);
-ALTER TABLE [dbo].[DismissalCases] ADD CONSTRAINT [FK_dbo.DismissalCases_dbo.SGKTerminationReasons_SGKTerminationReasonID] FOREIGN KEY ([SGKTerminationReasonID]) REFERENCES [dbo].[SGKTerminationReasons] ([ID]);
 ALTER TABLE [dbo].[DismissalCaseSupprtedBies] ADD CONSTRAINT [FK_dbo.DismissalCaseSupprtedBies_dbo.DismissalCases_DismissalCaseId] FOREIGN KEY ([DismissalCaseId]) REFERENCES [dbo].[DismissalCases] ([ID]) ON DELETE CASCADE;
 ALTER TABLE [dbo].[DismissalCaseSupprtedBies] ADD CONSTRAINT [FK_dbo.DismissalCaseSupprtedBies_dbo.SupportedBies_SupportedById] FOREIGN KEY ([SupportedById]) REFERENCES [dbo].[SupportedBies] ([ID]) ON DELETE CASCADE;
 ALTER TABLE [dbo].[DismissalCaseTags] ADD CONSTRAINT [FK_dbo.DismissalCaseTags_dbo.DismissalCases_DismissalCaseID] FOREIGN KEY ([DismissalCaseID]) REFERENCES [dbo].[DismissalCases] ([ID]) ON DELETE CASCADE;

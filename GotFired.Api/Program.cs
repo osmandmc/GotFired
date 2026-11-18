@@ -20,8 +20,14 @@ var config = builder.Configuration;
 builder.Services.AddDbContext<GotFiredDbContext>(options =>
     options.UseSqlServer(config.GetConnectionString("GotFired")
             ?? throw new InvalidOperationException("ConnectionStrings:GotFired is not configured."),
-        // EF6 always loaded multiple collection includes in one query; keep that explicitly.
-        sql => sql.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery)));
+        sql =>
+        {
+            // EF6 always loaded multiple collection includes in one query; keep that explicitly.
+            sql.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery);
+            // Generate SQL for the database's compatibility level. Production runs at 100 (SQL Server 2008),
+            // where e.g. OPENJSON (EF's default for list.Contains) does not exist.
+            sql.UseCompatibilityLevel(config.GetValue("Database:CompatibilityLevel", 100));
+        }));
 
 builder.Services
     .AddIdentityCore<ApplicationUser>(options =>
