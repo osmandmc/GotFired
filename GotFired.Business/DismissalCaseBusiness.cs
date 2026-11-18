@@ -1,4 +1,4 @@
-﻿using GotFired.DAL;
+using GotFired.DAL;
 using GotFired.Model;
 using System;
 using System.Collections.Generic;
@@ -13,9 +13,9 @@ namespace GotFired.Business
     {
         readonly UnitOfWork _unitOfWork;
 
-        public DismissalCaseBusiness()
+        public DismissalCaseBusiness(UnitOfWork unitOfWork)
         {
-            _unitOfWork = new UnitOfWork();
+            _unitOfWork = unitOfWork;
         }
 
         public IEnumerable<DismissalCaseListModel> GetDismissalCaseListModel(int page, int pageSize)

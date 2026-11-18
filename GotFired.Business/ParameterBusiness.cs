@@ -1,4 +1,4 @@
-﻿using GotFired.DAL;
+using GotFired.DAL;
 using GotFired.DAL.Repositories;
 using GotFired.Model;
 using GotFired.Model.Entities.DismissalCase;
@@ -15,9 +15,9 @@ namespace GotFired.Business
     {
         readonly UnitOfWork _unitOfWork;
 
-        public ParameterBusiness()
+        public ParameterBusiness(UnitOfWork unitOfWork)
         {
-            _unitOfWork = new UnitOfWork();
+            _unitOfWork = unitOfWork;
         }
 
         public void CreateAnswerTemplate(AnswerTemplate answerTemplate)

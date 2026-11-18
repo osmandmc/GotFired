@@ -1,36 +1,34 @@
-﻿using GotFired.Api.Filter;
-using GotFired.Api.Handlers;
-using GotFired.Api.Helper;
+
 using GotFired.Business;
 using GotFired.Model.Entities.DismissalCase;
 using GotFired.Model.Entities.Enums;
 using GotFired.Model.ViewModels;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web.Http;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace GotFired.Api.Controllers
 {
-    [CustomExceptionFilter]
-    [RoutePrefix("api/v1/dismissalcase")]
+    [ApiController]
+    [Route("api/v1/dismissalcase")]
     //[EnableCors("http://localhost:54483", "*", "*")]
     [Authorize(Roles = "admin,editor,user")]
-    public class DismissalCaseController : ApiController
+    public class DismissalCaseController : ControllerBase
     {
         const short pageSize = 20;
         //IDismissalCaseBusiness _dismissalCaseBusiness;
         readonly DismissalCaseBusiness _dismissalCaseBusiness;
+        readonly SmtpManager _smtpManager;
 
-        public DismissalCaseController()
+        public DismissalCaseController(DismissalCaseBusiness dismissalCaseBusiness, SmtpManager smtpManager)
         {
-            _dismissalCaseBusiness = new DismissalCaseBusiness();
+            _dismissalCaseBusiness = dismissalCaseBusiness;
+            _smtpManager = smtpManager;
         }
 
 
         [AllowAnonymous]
-        [HttpGet, Route("apply")]
-        public IHttpActionResult Apply()
+        [HttpGet("apply")]
+        public IActionResult Apply()
         {
             try
             {
@@ -65,34 +63,39 @@ namespace GotFired.Api.Controllers
                         sgkTerminationReasons
                     });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Json("Hatayı bulamadım");
+                return new JsonResult("Hatayı bulamadım");
             }
         }
 
         [AllowAnonymous]
-        [HttpPost, Route("apply")]
-        public IHttpActionResult Apply(DismissalCaseApplyModel model)
+        [HttpPost("apply")]
+        public IActionResult Apply([FromForm] DismissalCaseApplyModel model)
         {
             if (model == null)
             {
-                return BadRequest("model cannot be null");
+                return BadRequest(new { Message = "model cannot be null" });
             }
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+                return BadRequest(new
+                {
+                    Message = "The request is invalid.",
+                    ModelState = ModelState.Where(e => e.Value.Errors.Count > 0)
+                        .ToDictionary(e => e.Key, e => e.Value.Errors.Select(x => x.ErrorMessage).ToArray())
+                });
 
             _dismissalCaseBusiness.AddDismissalCase(model);
             return Ok();
         }
 
-        [HttpGet, Route("index/{page}")]
-        public IHttpActionResult Index(int page = 1)
+        [HttpGet("index/{page}")]
+        public IActionResult Index(int page = 1)
         {
             var dismissalCaseListModel = _dismissalCaseBusiness.GetDismissalCaseListModel(page, pageSize);
             if (dismissalCaseListModel == null)
             {
-                return BadRequest("model cannot be null");
+                return BadRequest(new { Message = "model cannot be null" });
             }
             int count = _dismissalCaseBusiness.GetAllDismissalCasesCount();
             return Ok(new
@@ -107,13 +110,13 @@ namespace GotFired.Api.Controllers
             });
         }
 
-        [HttpGet, Route("pending/{page}")]
-        public IHttpActionResult Pending(int page = 1)
+        [HttpGet("pending/{page}")]
+        public IActionResult Pending(int page = 1)
         {
             var dismissalCaseListModel = _dismissalCaseBusiness.GetDismissalCaseListModelByStatus(AppealState.Pending, page, pageSize);
             if (dismissalCaseListModel == null)
             {
-                return BadRequest("model cannot be null");
+                return BadRequest(new { Message = "model cannot be null" });
             }
             int count = _dismissalCaseBusiness.GetAllDismissalCasesCountByStatus(AppealState.Pending);
             return Ok(new
@@ -128,13 +131,13 @@ namespace GotFired.Api.Controllers
             });
         }
 
-        [HttpGet, Route("answered/{page}")]
-        public IHttpActionResult Answered(int page = 1)
+        [HttpGet("answered/{page}")]
+        public IActionResult Answered(int page = 1)
         {
             var dismissalCaseListModel = _dismissalCaseBusiness.GetDismissalCaseListModelByStatus(AppealState.Answered, page, pageSize);
             if (dismissalCaseListModel == null)
             {
-                return BadRequest("model cannot be null");
+                return BadRequest(new { Message = "model cannot be null" });
             }
             int count = _dismissalCaseBusiness.GetAllDismissalCasesCountByStatus(AppealState.Answered);
             return Ok(new
@@ -149,51 +152,50 @@ namespace GotFired.Api.Controllers
             });
         }
 
-        [HttpGet, Route("view/{id}")]
-        public IHttpActionResult View(int id)
+        [HttpGet("view/{id}")]
+        public IActionResult View(int id)
         {
             var dismissalCaseViewModel = _dismissalCaseBusiness.GetDismissalCaseById(id);
             if (dismissalCaseViewModel == null)
             {
-                return BadRequest("model cannot be null");
+                return BadRequest(new { Message = "model cannot be null" });
             }
             return Ok(dismissalCaseViewModel);
         }
         [AllowAnonymous]
-        [HttpGet, Route("userview/{guid}")]
-        public IHttpActionResult UserView(string guid)
+        [HttpGet("userview/{guid}")]
+        public IActionResult UserView(string guid)
         {
             var dismissalCase = _dismissalCaseBusiness.GetDismissalCaseByGuid(guid);
             if (dismissalCase == null)
             {
-                return BadRequest("model cannot be null");
+                return BadRequest(new { Message = "model cannot be null" });
             }
             return Ok(dismissalCase);
         }
 
-        [HttpPost, Route("answer")]
-        public IHttpActionResult Answer(CommentViewModel commentViewModel)
+        [HttpPost("answer")]
+        public IActionResult Answer(CommentViewModel commentViewModel)
         {
-            var smtpManager = new SmtpManager();
-            smtpManager.SendEmail(commentViewModel.EmailAddress, commentViewModel.Guid);
+            _smtpManager.SendEmail(commentViewModel.EmailAddress, commentViewModel.Guid);
             _dismissalCaseBusiness.UpdateDismissalCaseByUserAnswer(commentViewModel);
             return Ok();
         }
-        [HttpPost, Route("postNotes")]
-        public IHttpActionResult PostNotes(NoteModel noteModel)
+        [HttpPost("postNotes")]
+        public IActionResult PostNotes(NoteModel noteModel)
         {
             _dismissalCaseBusiness.UpdateDismissalCaseByNotes(noteModel);
             return Ok();
         }
-        [HttpPost, Route("makeRead")]
-        public IHttpActionResult MakeRead(DismissalCaseId dismissalCaseId)
+        [HttpPost("makeRead")]
+        public IActionResult MakeRead(DismissalCaseId dismissalCaseId)
         {
             _dismissalCaseBusiness.UpdateDismissalCaseByAppealState(dismissalCaseId.Id);
             return Ok();
         }
         [AllowAnonymous]
-        [HttpPost, Route("useranswer")]
-        public IHttpActionResult UserAnswer(CommentViewModel commentViewModel)
+        [HttpPost("useranswer")]
+        public IActionResult UserAnswer([FromForm] CommentViewModel commentViewModel)
         {
             Comment comment = new Comment
             {
@@ -207,56 +209,56 @@ namespace GotFired.Api.Controllers
             return Ok(comment);
         }
 
-        [HttpGet, Route("getCategories")]
-        public IHttpActionResult GetCategories()
+        [HttpGet("getCategories")]
+        public IActionResult GetCategories()
         {
             var categories = _dismissalCaseBusiness.GetCategories();
             return Ok(categories);
         }
-        [HttpGet, Route("getTags")]
-        public IHttpActionResult GetTags()
+        [HttpGet("getTags")]
+        public IActionResult GetTags()
         {
             var categories = _dismissalCaseBusiness.GetTags();
             return Ok(categories);
         }
-        [HttpGet, Route("getTags/{query}")]
-        public IHttpActionResult GetTags(string query)
+        [HttpGet("getTags/{query}")]
+        public IActionResult GetTags(string query)
         {
             var categories = _dismissalCaseBusiness.GetTags(query);
             return Ok(categories);
         }
-        [HttpGet, Route("getAnswerTemplates")]
-        public IHttpActionResult GetAnswerTemplates()
+        [HttpGet("getAnswerTemplates")]
+        public IActionResult GetAnswerTemplates()
         {
             var answerTemplates = _dismissalCaseBusiness.GetAnswerTemplatesLookup();
             if (answerTemplates == null)
             {
-                return BadRequest("model cannot be null");
+                return BadRequest(new { Message = "model cannot be null" });
             }
             return Ok(answerTemplates);
         }
-        [HttpGet, Route("getAnswerTemplateContent/{id}")]
-        public IHttpActionResult GetAnswerTemplateContent(int id)
+        [HttpGet("getAnswerTemplateContent/{id}")]
+        public IActionResult GetAnswerTemplateContent(int id)
         {
             var answerTemplateContent = _dismissalCaseBusiness.GetAnswerTemplateContent(id);
             return Ok(answerTemplateContent);
         }
-        [HttpPost, Route("evaluate")]
-        public IHttpActionResult Evaluate(EvaluationViewModel model)
+        [HttpPost("evaluate")]
+        public IActionResult Evaluate(EvaluationViewModel model)
         {
             _dismissalCaseBusiness.Evaluate(model);
             return Ok();
         }
 
-        [HttpPost, Route("addTag")]
-        public IHttpActionResult AddDismissalCaseTag(DismissalCaseTag model)
+        [HttpPost("addTag")]
+        public IActionResult AddDismissalCaseTag(DismissalCaseTag model)
         {
             _dismissalCaseBusiness.AddDismissalCaseTag(model);
             return Ok();
         }
 
-        [HttpPost, Route("removeTag")]
-        public IHttpActionResult RemoveDismissalCaseTag(DismissalCaseTag model)
+        [HttpPost("removeTag")]
+        public IActionResult RemoveDismissalCaseTag(DismissalCaseTag model)
         {
             _dismissalCaseBusiness.RemoveDismissalCaseTag(model);
             return Ok();

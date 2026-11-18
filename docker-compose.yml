@@ -1,0 +1,40 @@
+# Local development stack: API + SQL Server + Mailpit (catches outgoing email, UI on http://localhost:8025).
+# The API seeds an "admin" user (password admin123) and sample data on first start.
+services:
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__GotFired: "Server=sql;Database=gotfired;User ID=sa;Password=Dev_Passw0rd!;TrustServerCertificate=True"
+      Smtp__Host: mailpit
+    depends_on:
+      sql:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+
+  sql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Dev_Passw0rd!"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqldata:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P 'Dev_Passw0rd!' -Q 'SELECT 1' || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - "8025:8025"
+
+volumes:
+  sqldata:

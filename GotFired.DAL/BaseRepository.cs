@@ -1,9 +1,8 @@
-﻿using GotFired.Model.Entities;
+using GotFired.Model.Entities;
 using GotFired.Model.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.Data.Entity;
-using System.Data.Entity.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -61,7 +60,7 @@ namespace GotFired.DAL
             {
                 throw new ArgumentNullException("model", "Hata Kodu:C102");
             }
-            _context.Entry(model).State = System.Data.Entity.EntityState.Modified;
+            _context.Entry(model).State = EntityState.Modified;
             string rowCheck1 = _context.Entry(model).GetDatabaseValues().GetValue<string>("RowVersion");
             string rowCheck2 = ((IRowVersion)model).RowVersion;
             if (rowCheck1 != rowCheck2)
