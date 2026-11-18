@@ -11,9 +11,12 @@ COPY . .
 RUN dotnet publish GotFired.Api/GotFired.Api.csproj -c Release -o /app --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+# tini as PID 1: the kernel ignores SIGABRT for PID 1, so without an init a crashing .NET process
+# (e.g. a startup configuration error) hangs instead of exiting and the container is never restarted.
+RUN apt-get update && apt-get install -y --no-install-recommends tini && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=build /app .
 # The aspnet image listens on 8080 and provides the non-root "app" user.
 USER app
 EXPOSE 8080
-ENTRYPOINT ["dotnet", "GotFired.Api.dll"]
+ENTRYPOINT ["/usr/bin/tini", "--", "dotnet", "GotFired.Api.dll"]

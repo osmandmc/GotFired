@@ -40,9 +40,9 @@ The EF Core model deliberately reproduces the schema created by EF6 + ASP.NET Id
 
 Existing databases are upgraded once with `db/upgrade-legacy-database.sql`. It adds the Core Identity columns and tables and marks the `Baseline` migration as applied. Fresh databases get the same schema from the `Baseline` migration. To check parity, diff the output of `db/tests/schema-snapshot.sql` between the two. The only expected difference is `AspNetUsers.LockoutEndDateUtc`, which is kept for rollback to the old app.
 
-Production facts (from the 2025-08 backup), which the code and scripts depend on:
-- The database collation is **`Turkish_CI_AS`**, so the upgrade script upper-cases normalized names under a Latin collation; otherwise `i`→`İ` breaks logins.
-- The compatibility level is **100**, so `Database:CompatibilityLevel` makes EF avoid newer SQL such as `OPENJSON`. Raise both together.
+Production is moving from SQL Server 2008 R2 to a new SQL Server 2022; the cutover runbook is [db/README.md](db/README.md). Facts from the 2025-08 backup that the code and scripts depend on:
+- The database collation is **`Turkish_CI_AS`**, and a restore keeps it. The upgrade script therefore upper-cases normalized names under a Latin collation; otherwise `i`→`İ` breaks logins.
+- The backup is at compatibility level **100**. The runbook raises it to 160. EF generates SQL for `Database:CompatibilityLevel` (default 160), and startup fails fast if the database's level is lower.
 - `DismissalCases.Guid` is not unique (74 old double-submitted cases share 31 Guids). `userview/{guid}` shows the newest case with the merged conversation, and `AddDismissalCase` ignores a repeated Guid.
 
 Identity v2 password hashes still verify and are rehashed to v3 at login. While rollback to the .NET Framework app must stay possible, set `Identity:PasswordHashCompatibilityV2=true`.
