@@ -90,12 +90,20 @@ form = urllib.parse.urlencode([
 ])
 s, r = call("POST", "/api/v1/dismissalcase/apply", form, content_type="application/x-www-form-urlencoded; charset=UTF-8")
 check("POST apply (jQuery form post)", s == 200, (s, r))
+s, r = call("POST", "/api/v1/dismissalcase/apply", form, content_type="application/x-www-form-urlencoded; charset=UTF-8")
+check("POST apply again with the same Guid (double click) -> 200", s == 200, (s, r))
 s, r = call("POST", "/api/v1/dismissalcase/apply", "Guid=x&ApplicantEmail=", content_type="application/x-www-form-urlencoded; charset=UTF-8")
 check("POST apply invalid -> 400 with Web API 2 ModelState shape", s == 400 and isinstance(r, dict) and "ModelState" in r, (s, r))
 
 s, case = call("GET", f"/api/v1/dismissalcase/userview/{guid}")
 check("GET userview/{guid}", s == 200 and case.get("FullName") == "Smoke Test" and case.get("GenderName") == "Kadın", (s, case))
 case_id = case.get("Id") if s == 200 else None
+
+# Legacy data: two cases share a Guid (only present in db/tests/legacy-ef6-schema.sql).
+s, dup = call("GET", "/api/v1/dismissalcase/userview/11111111-2222-3333-4444-555555555555")
+if s != 400:
+    check("userview with a Guid shared by 2 legacy cases: newest case, merged conversation",
+          s == 200 and dup["Id"] == 2 and [c["Text"] for c in dup["Comments"]] == ["İlk mesaj", "Personel cevabı"], (s, dup))
 s, r = call("POST", "/api/v1/dismissalcase/useranswer",
             urllib.parse.urlencode({"DismissalCaseId": case_id, "Text": "<p>soru</p>", "UserName": "Smoke Test", "Guid": guid}),
             content_type="application/x-www-form-urlencoded; charset=UTF-8")
@@ -107,6 +115,8 @@ for path in ["index/1", "pending/1", "answered/1"]:
     check(f"GET {path}: data + paging", s == 200 and "data" in r and r["paging"]["ItemsPerPage"] == 20, (s, r))
 s, r = call("GET", "/api/v1/dismissalcase/pending/1", token=admin)
 check("pending list contains the new case", s == 200 and any(c["Id"] == case_id for c in r["data"]), r)
+check("double-submitted apply stored only one case",
+      s == 200 and sum(1 for c in r["data"] if c["ApplicantFullName"] == "Smoke Test" and c["CreatedDate"][:16] == next(x["CreatedDate"][:16] for x in r["data"] if x["Id"] == case_id)) == 1, r)
 existing = []
 for p in (1, 2):
     s, r = call("GET", f"/api/v1/dismissalcase/index/{p}", token=admin)

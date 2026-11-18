@@ -84,6 +84,12 @@ namespace GotFired.Business
         
         public void AddDismissalCase(DismissalCaseApplyModel model)
         {
+            // The Guid is issued by GET apply when the form loads; a second POST with the same Guid is a
+            // double-clicked submit. Accept it without storing a duplicate case.
+            if (!string.IsNullOrEmpty(model.Guid) && _unitOfWork.dismissalCaseRepository.ExistsByGuid(model.Guid))
+            {
+                return;
+            }
             DismissalCase dismissalCase = new DismissalCase
             {
                 AdditionalInfo = model.AdditionalInfo,

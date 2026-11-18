@@ -43,7 +43,7 @@ Existing databases are upgraded once with `db/upgrade-legacy-database.sql`. It a
 Production facts (from the 2025-08 backup), which the code and scripts depend on:
 - The database collation is **`Turkish_CI_AS`**, so the upgrade script upper-cases normalized names under a Latin collation; otherwise `i`→`İ` breaks logins.
 - The compatibility level is **100**, so `Database:CompatibilityLevel` makes EF avoid newer SQL such as `OPENJSON`. Raise both together.
-- `DismissalCases.Guid` is not unique: double-clicked submissions reuse it. `userview/{guid}` uses `SingleOrDefault` and fails for those cases. This is pre-existing.
+- `DismissalCases.Guid` is not unique (74 old double-submitted cases share 31 Guids). `userview/{guid}` shows the newest case with the merged conversation, and `AddDismissalCase` ignores a repeated Guid.
 
 Identity v2 password hashes still verify and are rehashed to v3 at login. While rollback to the .NET Framework app must stay possible, set `Identity:PasswordHashCompatibilityV2=true`.
 

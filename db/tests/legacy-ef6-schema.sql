@@ -288,3 +288,7 @@ INSERT [dbo].[DismissalCases] (Guid, ApplicantId, CityID, EmploymentDurationSinc
 VALUES ('11111111-2222-3333-4444-555555555555', 1, 1, 4, 2, 0, 1, 1, 1, 1, 1, 1, 1, GETDATE(), GETDATE(), 0, 1, 'A1B2C3D411111111');
 INSERT [dbo].[DismissalCaseSupprtedBies] (DismissalCaseId, SupportedById, Editor, Creator, CreatedDate, EditedDate, IsDeleted, IsActive, RowVersion) VALUES (1, 1, 0, 0, GETDATE(), GETDATE(), 0, 1, 'A1B2C3D411111111');
 INSERT [dbo].[Comments] (DismissalCaseID, Text, UserName, Editor, Creator, CreatedDate, EditedDate, IsDeleted, IsActive, RowVersion) VALUES (1, N'İlk mesaj', N'Eski Başvuru', 0, 0, GETDATE(), GETDATE(), 0, 1, 'A1B2C3D411111111');
+-- Production has double-submitted cases sharing one Guid (case 2 duplicates case 1, staff replied to it).
+INSERT [dbo].[DismissalCases] (Guid, ApplicantId, CityID, EmploymentDurationSince, EmployeeCount, HasSignedAnyDocument, DismissalState, WantShareHisExperience, AppealState, Editor, Creator, CreatedDate, EditedDate, IsDeleted, IsActive, RowVersion)
+VALUES ('11111111-2222-3333-4444-555555555555', 1, 1, 4, 2, 0, 1, 1, 2, 1, 1, DATEADD(second, 3, GETDATE()), GETDATE(), 0, 1, 'A1B2C3D411111111');
+INSERT [dbo].[Comments] (DismissalCaseID, Text, UserName, Editor, Creator, CreatedDate, EditedDate, IsDeleted, IsActive, RowVersion) VALUES (2, N'Personel cevabı', N'legacy-admin', 0, 0, DATEADD(minute, 5, GETDATE()), GETDATE(), 0, 1, 'A1B2C3D411111111');

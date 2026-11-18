@@ -105,13 +105,6 @@ namespace GotFired.DAL.Repositories
         public DismissalCaseViewModel GetDismissalCaseByGuid(string guid)
         {
             var model = _dbSet
-                .Include(d => d.Applicant)
-                .Include(d => d.Comments)
-                .Include(d => d.City)
-                .Include(d => d.DismissalCaseSupprtedBys).ThenInclude(s => s.SupportedBy)
-                .Include(d => d.DeclaredTerminationReason)
-                .Include(d => d.SGKTerminationReason)
-                .Include(d => d.CompanySector)
                 .Where(d => d.Guid == guid)
                 .Select(d => new DismissalCaseViewModel
                 {
@@ -141,16 +134,34 @@ namespace GotFired.DAL.Repositories
                     SignedDocuments = d.SignedDocuments,
                     WantShareHisExperienceString = d.WantShareHisExperience ? "Evet" : "Hayır",
                     SupportedByNames = d.DismissalCaseSupprtedBys.Select(s => s.SupportedBy.Name),
-                    Notes = d.Notes,
-                    Comments = d.Comments.Select(c => new CommentViewModel
+                    Notes = d.Notes
+                })
+                // A double-clicked apply form used to store the same Guid on several cases (74 in production),
+                // which made SingleOrDefault throw. Show the newest one...
+                .OrderByDescending(d => d.Id)
+                .FirstOrDefault();
+
+            if (model != null)
+            {
+                // ...with the conversation from every case sharing the Guid, since staff replied on several of them.
+                model.Comments = _context.Comment
+                    .Where(c => _dbSet.Any(d => d.Guid == guid && d.ID == c.DismissalCaseID))
+                    .OrderBy(c => c.CreatedDate).ThenBy(c => c.ID)
+                    .Select(c => new CommentViewModel
                     {
                         DismissalCaseId = c.DismissalCaseID,
                         Text = c.Text,
                         UserName = c.UserName,
                         CreatedDate = c.CreatedDate
                     })
-                }).SingleOrDefault();
+                    .ToList();
+            }
             return model;
+        }
+
+        public bool ExistsByGuid(string guid)
+        {
+            return _dbSet.Any(d => d.Guid == guid);
         }
         public int GetCountByAppealState(AppealState appealState)
         {
