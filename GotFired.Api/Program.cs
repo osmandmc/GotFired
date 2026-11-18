@@ -17,6 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
 
 // --- Data -------------------------------------------------------------------------------------
+int compatibilityLevel = config.GetValue("Database:CompatibilityLevel", 160);
 builder.Services.AddDbContext<GotFiredDbContext>(options =>
     options.UseSqlServer(config.GetConnectionString("GotFired")
             ?? throw new InvalidOperationException("ConnectionStrings:GotFired is not configured."),
@@ -24,9 +25,10 @@ builder.Services.AddDbContext<GotFiredDbContext>(options =>
         {
             // EF6 always loaded multiple collection includes in one query; keep that explicitly.
             sql.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery);
-            // Generate SQL for the database's compatibility level. Production runs at 100 (SQL Server 2008),
-            // where e.g. OPENJSON (EF's default for list.Contains) does not exist.
-            sql.UseCompatibilityLevel(config.GetValue("Database:CompatibilityLevel", 100));
+            // Generate SQL for the database's compatibility level. A database restored from the old SQL Server 2008 R2
+            // keeps level 100 until raised (db/README.md); at 100, e.g. OPENJSON (EF's default for list.Contains) does
+            // not exist. Checked against the real level at startup below.
+            sql.UseCompatibilityLevel(compatibilityLevel);
         }));
 
 builder.Services
@@ -137,6 +139,19 @@ if (config.GetValue<bool>("Seed:Enabled"))
         sp.GetRequiredService<RoleManager<IdentityRole>>(),
         config["Seed:AdminUserName"] ?? "admin",
         config["Seed:AdminPassword"] ?? throw new InvalidOperationException("Seed:AdminPassword is required when Seed:Enabled is true."));
+}
+
+// Fail fast if EF would generate SQL the database cannot run (e.g. a restored backup still at level 100).
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<GotFiredDbContext>();
+    int actual = await db.Database
+        .SqlQueryRaw<int>("SELECT CAST(compatibility_level AS int) AS [Value] FROM sys.databases WHERE name = DB_NAME()")
+        .SingleAsync();
+    if (actual < compatibilityLevel)
+        throw new InvalidOperationException(
+            $"Database compatibility level is {actual} but Database:CompatibilityLevel is {compatibilityLevel}. " +
+            $"Raise it (ALTER DATABASE CURRENT SET COMPATIBILITY_LEVEL = {compatibilityLevel}) or set Database__CompatibilityLevel={actual}. See db/README.md.");
 }
 
 app.Run();

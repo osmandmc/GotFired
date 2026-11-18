@@ -1,0 +1,50 @@
+# Moving the database to SQL Server 2022
+
+The production database moves from the old SQL Server 2008 R2 (Plesk) to a new SQL Server 2022 server. Every step below was tested in this order on a restore of the 2025-08 backup.
+
+## Steps
+
+1. **Stop writes on the old site** (maintenance page), so no applications arrive during the move.
+2. **Back up the old database:**
+   ```sql
+   BACKUP DATABASE gotfired TO DISK = 'gotfired-cutover.bak' WITH COPY_ONLY, INIT;
+   ```
+3. **Restore it on SQL Server 2022.** Use `RESTORE FILELISTONLY` first to get the logical names; they are `gotfired` and `gotfired_log`.
+   ```sql
+   RESTORE DATABASE gotfired FROM DISK = '/path/gotfired-cutover.bak'
+   WITH MOVE 'gotfired' TO '/var/opt/mssql/data/gotfired.mdf',
+        MOVE 'gotfired_log' TO '/var/opt/mssql/data/gotfired_log.ldf', RECOVERY;
+   ```
+   SQL Server upgrades the file format automatically. The database keeps its `Turkish_CI_AS` collation, which is expected and handled.
+4. **Raise the compatibility level.** A restore keeps level 100, and the app refuses to start below the level it is configured for (`Database:CompatibilityLevel`, default 160).
+   ```sql
+   ALTER DATABASE gotfired SET COMPATIBILITY_LEVEL = 160;
+   ```
+5. **Run the upgrade script** (idempotent; it records the EF Core `Baseline` migration):
+   ```sh
+   sqlcmd -S <server> -d gotfired -U <admin> -i db/upgrade-legacy-database.sql -b
+   ```
+   It ends by listing user names with non-ASCII characters; the 2025-08 backup had none.
+6. **Create an app login** with only `db_datareader` and `db_datawriter`, not `sa`. Future EF Core migrations run separately with a DDL-capable login.
+7. **Deploy the container** with these environment variables:
+
+   | Variable | Value |
+   |---|---|
+   | `ConnectionStrings__GotFired` | `Server=…;Database=gotfired;User ID=…;Password=…;Encrypt=True` (add `TrustServerCertificate=True` only for a self-signed certificate) |
+   | `Jwt__Key` | random, at least 32 bytes, e.g. `openssl rand -base64 48` |
+   | `Smtp__Password` | the **rotated** SMTP password |
+   | `Smtp__ExceptionRecipient` | who receives error emails |
+   | `Smtp__PublicBaseUrl` | public site URL, used in the applicant email link |
+   | `Identity__PasswordHashCompatibilityV2` | `true` while a rollback must stay possible (see below) |
+
+8. **Check it:** log in with a real account and open a case. Run `tests/api_smoke_test.py` only against a staging copy, never against production, because it writes test data.
+
+## Rollback
+
+The old database on the 2008 R2 server is untouched by this procedure, so rolling back to it loses anything written since the move. To roll back *with* that data, point the old app at the new database. The upgrade only adds columns and tables, so the old app keeps working. This requires `Identity__PasswordHashCompatibilityV2=true` from the start: otherwise every user who logged in to the new app gets a v3 password hash, which the old app cannot verify. Remove the setting once rollback is no longer needed.
+
+## Files
+
+- `upgrade-legacy-database.sql`: the one-time upgrade above.
+- `tests/legacy-ef6-schema.sql`: a test fixture that reproduces the old schema (Turkish collation, compatibility level 100, the missing SGK foreign key, duplicate Guids).
+- `tests/schema-snapshot.sql`: one line per column, key and index. Diff the output from two databases to check parity; the only expected difference is `AspNetUsers.LockoutEndDateUtc`, which is kept for rollback.
