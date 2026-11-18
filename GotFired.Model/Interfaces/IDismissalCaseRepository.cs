@@ -1,4 +1,4 @@
-﻿using GotFired.Model.Entities.DismissalCase;
+using GotFired.Model.Entities.DismissalCase;
 using GotFired.Model.Entities.Enums;
 using GotFired.Model.ViewModels;
 using System;
@@ -15,6 +15,7 @@ namespace GotFired.Model.Interfaces
         IEnumerable<DismissalCaseListModel> GetDismissalCasesByStatus(AppealState appealState, int page, int pageSize);
         DismissalCaseViewModel GetDismissalCaseById(int id);
         DismissalCaseViewModel GetDismissalCaseByGuid(string guid);
+        bool ExistsByGuid(string guid);
         int GetCountByAppealState(AppealState appealState);
     }
 }

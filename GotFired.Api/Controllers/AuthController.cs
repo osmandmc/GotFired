@@ -1,25 +1,28 @@
-﻿using GotFired.Business;
+using GotFired.Business;
 using GotFired.Model.ViewModels;
-using System.Web.Http;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace GotFired.Api.Controllers
 {
-    [RoutePrefix("api/v1/auth")]
-  
-    public class AuthController : ApiController
+    [ApiController]
+    [Route("api/v1/auth")]
+    public class AuthController : ControllerBase
     {
-        readonly AuthBusiness _authBusiness;
-        const int pageSize = 20;
-        public AuthController()
+        private readonly AuthBusiness _authBusiness;
+        private const int pageSize = 20;
+
+        public AuthController(AuthBusiness authBusiness)
         {
-            _authBusiness = new AuthBusiness();
+            _authBusiness = authBusiness;
         }
+
         [Authorize(Roles = "admin, user")]
-        [HttpGet,Route("index/{page}")]
-        public IHttpActionResult Index(int page = 1)
+        [HttpGet("index/{page}")]
+        public async Task<IActionResult> Index(int page = 1)
         {
-            var users = _authBusiness.GetUsers(page, pageSize);
-            int count = _authBusiness.GetUsersCount();
+            var users = await _authBusiness.GetUsersAsync(page, pageSize);
+            int count = await _authBusiness.GetUsersCountAsync();
             return Ok(new
             {
                 data = users,
@@ -31,64 +34,60 @@ namespace GotFired.Api.Controllers
                 }
             });
         }
-        [Authorize(Roles = "admin")]
-        [HttpPost, Route("create")]
-        public IHttpActionResult Create([FromBody]UserModel userModel)
-        {
-            _authBusiness.RegisterUser(userModel);
 
+        [Authorize(Roles = "admin")]
+        [HttpPost("create")]
+        public async Task<IActionResult> Create(UserModel userModel)
+        {
+            await _authBusiness.RegisterUserAsync(userModel);
             return Ok("Üyelik bilgileriniz alınmıştır.");
         }
-        [Authorize(Roles = "admin")]
-        [HttpPost, Route("changePassword")]
-        public IHttpActionResult ChangePassword([FromBody]UserModel userModel)
-        {
-            _authBusiness.ChangePassword(userModel);
 
+        [Authorize(Roles = "admin")]
+        [HttpPost("changePassword")]
+        public async Task<IActionResult> ChangePassword(UserModel userModel)
+        {
+            await _authBusiness.ChangePasswordAsync(userModel);
             return Ok("Üyelik bilgileriniz alınmıştır.");
         }
-        [Authorize(Roles = "admin, user")]
-        [HttpGet, Route("getUserById/{id}")]
-        public IHttpActionResult GetUserById(string id)
-        {
-            var userRole = _authBusiness.GetUserById(id);
-            return Ok(userRole);
-        }
-        [Authorize(Roles = "admin, user")]
-        [HttpGet, Route("getUserRoles/{id}")]
-        public IHttpActionResult GetUserRoles(string id)
-        {
-            var userRole = _authBusiness.GetUserRoles(id);
-            return Ok(userRole);
-        }
-        [Authorize(Roles = "admin, user")]
-        [HttpGet, Route("getAllRoles")]
-        public IHttpActionResult GetAllRoles()
-        {
-            var userRole = _authBusiness.GetAllRoles();
-            return Ok(userRole);
-        }
-        [Authorize(Roles = "admin")]
-        [HttpPost, Route("updateUserRoles")]
-        public IHttpActionResult UpdateUserRoles([FromBody]UserRoleModel userRoleModel)
-        {
-            _authBusiness.UpdateUserRoleModel(userRoleModel);
 
+        [Authorize(Roles = "admin, user")]
+        [HttpGet("getUserById/{id}")]
+        public async Task<IActionResult> GetUserById(string id)
+        {
+            return Ok(await _authBusiness.GetUserByIdAsync(id));
+        }
+
+        [Authorize(Roles = "admin, user")]
+        [HttpGet("getUserRoles/{id}")]
+        public async Task<IActionResult> GetUserRoles(string id)
+        {
+            return Ok(await _authBusiness.GetUserRolesAsync(id));
+        }
+
+        [Authorize(Roles = "admin, user")]
+        [HttpGet("getAllRoles")]
+        public async Task<IActionResult> GetAllRoles()
+        {
+            return Ok(await _authBusiness.GetAllRolesAsync());
+        }
+
+        [Authorize(Roles = "admin")]
+        [HttpPost("updateUserRoles")]
+        public async Task<IActionResult> UpdateUserRoles(UserRoleModel userRoleModel)
+        {
+            await _authBusiness.UpdateUserRoleModelAsync(userRoleModel);
             return Ok("Üyelik bilgileriniz alınmıştır.");
         }
-        // POST api/Account/Register
+
+        // Anonymous self-registration (a POST by Web API 2 convention). Not used by the SPA; kept for parity.
+        // Users created here have no role and therefore cannot access any endpoint.
         [AllowAnonymous]
-        [Route("register")]
-        public IHttpActionResult Register(UserModel userModel)
+        [HttpPost("register")]
+        public async Task<IActionResult> Register(UserModel userModel)
         {
-            _authBusiness.RegisterUser(userModel);
-
+            await _authBusiness.RegisterUserAsync(userModel);
             return Ok("Üyelik bilgileriniz alınmıştır.");
         }
-
-
-       
-
     }
-
 }

@@ -1,110 +1,125 @@
-﻿using GotFired.DAL;
+﻿using GotFired.Model.Identity;
 using GotFired.Model.ViewModels;
-using Microsoft.AspNet.Identity;
-using Microsoft.AspNet.Identity.EntityFramework;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace GotFired.DAL
 {
     public class AuthRepository
     {
-        internal GotFiredDbContext _context;
-        internal UserManager<ApplicationUser> _userManager;
-        internal RoleManager<IdentityRole> _roleManager;
+        private readonly GotFiredDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
-        public AuthRepository(GotFiredDbContext context)
+        public AuthRepository(GotFiredDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
         {
             _context = context;
-            _userManager = new UserManager<ApplicationUser>(new UserStore<ApplicationUser>(context));
-            _roleManager = new RoleManager<IdentityRole>(new RoleStore<IdentityRole>(context));
+            _userManager = userManager;
+            _roleManager = roleManager;
         }
-        public int GetUsersCount()
+
+        public Task<int> GetUsersCountAsync()
         {
-            return _userManager.Users.Count();
+            return _userManager.Users.CountAsync();
         }
-        public IEnumerable<UserListItemModel> GetUsers(int page, int pageSize)
+
+        public async Task<IEnumerable<UserListItemModel>> GetUsersAsync(int page, int pageSize)
         {
-            var users = _userManager.Users.Select(u => new UserListItemModel { UserId = u.Id, UserName = u.UserName,  RoleIds = u.Roles.Select(r => r.RoleId).ToList() }).OrderBy(u => u.UserName).Skip((page - 1) * pageSize).Take(pageSize).ToList();
+            var users = await _userManager.Users
+                .OrderBy(u => u.UserName)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(u => new UserListItemModel
+                {
+                    UserId = u.Id,
+                    UserName = u.UserName,
+                    RoleIds = _context.UserRoles.Where(r => r.UserId == u.Id).Select(r => r.RoleId).ToList()
+                })
+                .ToListAsync();
+
+            var roleNames = await _roleManager.Roles.ToDictionaryAsync(r => r.Id, r => r.Name);
             foreach (var item in users)
             {
-                item.RoleNames = _roleManager.Roles.Where(r => item.RoleIds.Contains(r.Id)).Select(r => r.Name).ToList();
+                item.RoleNames = item.RoleIds.Where(roleNames.ContainsKey).Select(id => roleNames[id]).ToList();
             }
             return users;
-
         }
-        public void Register(UserModel userModel)
+
+        public async Task RegisterAsync(UserModel userModel)
         {
-            ApplicationUser user = new ApplicationUser
+            var user = new ApplicationUser
             {
                 UserName = userModel.UserName,
                 FriendlyName = userModel.FriendlyName
-
             };
-            IdentityResult result = _userManager.Create(user, userModel.Password);
+            IdentityResult result = await _userManager.CreateAsync(user, userModel.Password);
             if (!result.Succeeded) throw new Exception("Kaydınız oluşturulamadı.");
         }
 
-        public UserTokenModel FindUser(string userName, string password)
+        /// <summary>Returns null when the user does not exist or the password is wrong.</summary>
+        public async Task<UserTokenModel> FindUserAsync(string userName, string password)
         {
-            IdentityUser result = _userManager.Find(userName, password);
-            
+            var user = await _userManager.FindByNameAsync(userName ?? string.Empty);
+            if (user == null || !await _userManager.CheckPasswordAsync(user, password ?? string.Empty))
+            {
+                return null;
+            }
+
+            var claims = await _userManager.GetClaimsAsync(user);
             return new UserTokenModel
             {
-                Email = result.Email,
-                EmailConfirmed = result.EmailConfirmed,
-                PhoneNumber = result.PhoneNumber,
-                Roles = result.Roles.Select(s => _roleManager.Roles.First(f=> f.Id == s.RoleId).Name).ToList(),
-                Claims = result.Claims.ToDictionary(d => d.ClaimType, d => d.ClaimValue)
+                UserName = user.UserName,
+                Email = user.Email,
+                EmailConfirmed = user.EmailConfirmed,
+                PhoneNumber = user.PhoneNumber,
+                Roles = await _userManager.GetRolesAsync(user),
+                Claims = claims.GroupBy(c => c.Type).ToDictionary(g => g.Key, g => g.First().Value)
             };
         }
 
-        public UserModel GetUserById(string id)
+        public async Task<UserModel> GetUserByIdAsync(string id)
         {
-            ApplicationUser result = _userManager.FindById(id);
+            ApplicationUser result = await _userManager.FindByIdAsync(id);
             return new UserModel { UserName = result.UserName };
         }
 
-        public void ChangePassword(UserModel model)
+        public async Task ChangePasswordAsync(UserModel model)
         {
-            var user = _userManager.FindByName(model.UserName);
-            _userManager.RemovePassword(user.Id);
-            var AddPassword = _userManager.AddPassword(user.Id, model.Password);
-            if (!AddPassword.Succeeded)
+            var user = await _userManager.FindByNameAsync(model.UserName);
+            await _userManager.RemovePasswordAsync(user);
+            var addPassword = await _userManager.AddPasswordAsync(user, model.Password);
+            if (!addPassword.Succeeded)
             {
                 throw new Exception("Kullanıcı parolası 6 karaketerden az olamaz.");
             }
-
         }
 
-        public UserRoleModel GetUserRoles(string id)
+        public async Task<UserRoleModel> GetUserRolesAsync(string id)
         {
-            //var user = _context.ApplicationUser.Where(s=>s.Id == id).FirstOrDefault();
-            var user = _userManager.Users.Where(s => s.Id == id).FirstOrDefault();
-            var userRoles = _userManager.GetRoles(id);
+            var user = await _userManager.FindByIdAsync(id);
             return new UserRoleModel
             {
                 UserName = user.UserName,
                 FriendlyName = user.FriendlyName,
-                UserRoles = userRoles
+                UserRoles = await _userManager.GetRolesAsync(user)
             };
         }
-        public void UpdateUserRoleModel(UserRoleModel userRoleModel)
+
+        public async Task UpdateUserRoleModelAsync(UserRoleModel userRoleModel)
         {
-            var applicationUser = _userManager.FindByName(userRoleModel.UserName);
+            var applicationUser = await _userManager.FindByNameAsync(userRoleModel.UserName);
             applicationUser.FriendlyName = userRoleModel.FriendlyName;
-            _userManager.Update(applicationUser);
-            _userManager.RemoveFromRoles(applicationUser.Id, _userManager.GetRoles(applicationUser.Id).ToArray());
-            foreach (var item in userRoleModel.UserRoles)
+            await _userManager.UpdateAsync(applicationUser);
+            await _userManager.RemoveFromRolesAsync(applicationUser, await _userManager.GetRolesAsync(applicationUser));
+            if (userRoleModel.UserRoles != null)
             {
-                _userManager.AddToRole(applicationUser.Id, item);
+                await _userManager.AddToRolesAsync(applicationUser, userRoleModel.UserRoles);
             }
         }
-        public IList<string> GetAllRoles()
-        {
-            return _roleManager.Roles.Select(r=>r.Name).ToList();
-        }
 
+        public async Task<IList<string>> GetAllRolesAsync()
+        {
+            return await _roleManager.Roles.Select(r => r.Name).ToListAsync();
+        }
     }
 }

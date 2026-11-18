@@ -1,28 +1,26 @@
-﻿using GotFired.Business;
+using GotFired.Business;
 using GotFired.Model.Entities.DismissalCase;
 using GotFired.Model.ViewModels;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Web.Http;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace GotFired.Api.Controllers
 {
-    [RoutePrefix("api/v1/answerTemplate")]
-    
-    public class AnswerTemplateController : ApiController
+    [ApiController]
+    [Route("api/v1/answerTemplate")]
+    public class AnswerTemplateController : ControllerBase
     {
-        readonly ParameterBusiness _parameterBusiness;
-        const int pageSize = 20;
-        public AnswerTemplateController()
+        private readonly ParameterBusiness _parameterBusiness;
+        private const int pageSize = 20;
+
+        public AnswerTemplateController(ParameterBusiness parameterBusiness)
         {
-            _parameterBusiness = new ParameterBusiness();
+            _parameterBusiness = parameterBusiness;
         }
+
         [Authorize(Roles = "admin, user")]
-        [HttpGet, Route("list/{page}")]
-        public IHttpActionResult Index(int page = 1)
+        [HttpGet("list/{page}")]
+        public IActionResult Index(int page = 1)
         {
             var answerTemplates = _parameterBusiness.GetAnswerTemplateListModel(page, pageSize);
             return Ok(new
@@ -32,31 +30,32 @@ namespace GotFired.Api.Controllers
                 {
                     CurrentPage = page,
                     ItemsPerPage = pageSize,
-                    //TotalItems = count
                 }
             });
         }
+
         [Authorize(Roles = "admin")]
-        [HttpPost, Route("create")]
-        public IHttpActionResult Create(AnswerTemplate answerTemplate)
+        [HttpPost("create")]
+        public IActionResult Create(AnswerTemplate answerTemplate)
         {
             _parameterBusiness.CreateAnswerTemplate(answerTemplate);
             return Ok();
         }
+
         [Authorize(Roles = "admin, user")]
-        [HttpGet, Route("getById/{id}")]
-        public IHttpActionResult Edit(int id)
+        [HttpGet("getById/{id}")]
+        public IActionResult Edit(int id)
         {
             var answerTemplate = _parameterBusiness.GetAnswerTemplate(id);
             return Ok(answerTemplate);
         }
+
         [Authorize(Roles = "admin")]
-        [HttpPost, Route("update")]
-        public IHttpActionResult Edit(AnswerTemplate answerTemplate)
+        [HttpPost("update")]
+        public IActionResult Edit(AnswerTemplate answerTemplate)
         {
             _parameterBusiness.UpdateAnswerTemplate(answerTemplate);
             return Ok();
         }
-
     }
 }

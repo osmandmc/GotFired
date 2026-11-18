@@ -1,4 +1,4 @@
-﻿using GotFired.Model.Entities.DismissalCase;
+using GotFired.Model.Entities.DismissalCase;
 using GotFired.Model.Interfaces;
 using GotFired.Model.ViewModels;
 using System;
@@ -20,7 +20,7 @@ namespace GotFired.DAL.Repositories
         }
         public IEnumerable<LookupIDNamePair> GetListModel(int page, int pageSize)
         {
-            var model = _dbSet.AsEnumerable().Skip((page - 1) * pageSize).Take(pageSize).
+            var model = _dbSet.OrderBy(d => d.ID).Skip((page - 1) * pageSize).Take(pageSize).
                Select(d => new LookupIDNamePair
                {
                    ID = d.ID,

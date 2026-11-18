@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="GotFired.Api/GotFired.Api.csproj" />
+  <Project Path="GotFired.Business/GotFired.Business.csproj" />
+  <Project Path="GotFired.DAL/GotFired.DAL.csproj" />
+  <Project Path="GotFired.Model/GotFired.Model.csproj" />
+</Solution>

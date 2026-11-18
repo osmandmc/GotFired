@@ -1,11 +1,11 @@
-﻿using GotFired.DAL;
+using GotFired.DAL;
 using GotFired.Model.Entities.DismissalCase;
 using GotFired.Model.Entities.Enums;
 using GotFired.Model.Interfaces;
 using GotFired.Model.ViewModels;
 using System;
 using System.Collections.Generic;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 
 namespace GotFired.DAL.Repositories
@@ -18,7 +18,7 @@ namespace GotFired.DAL.Repositories
 
         public IEnumerable<DismissalCaseListModel> GetDismissalCaseListModel(int page, int pageSize)
         {
-            var model = _dbSet.Include(d=>d.Applicant).Include(d=>d.Comments).OrderByDescending(d => d.EditedDate).AsEnumerable().Skip((page - 1) * pageSize).Take(pageSize).
+            var model = _dbSet.Include(d=>d.Applicant).Include(d=>d.Comments).OrderByDescending(d => d.EditedDate).Skip((page - 1) * pageSize).Take(pageSize).AsEnumerable().
                 Select(d => new DismissalCaseListModel
                 {
                     Id = d.ID,
@@ -36,7 +36,7 @@ namespace GotFired.DAL.Repositories
         {
             var model = _dbSet.Include(d => d.Applicant).Include(d => d.Comments).OrderByDescending(d => d.EditedDate)
                .Where(d=>d.AppealState == appealState)
-               .AsEnumerable().Skip((page - 1) * pageSize).Take(pageSize)
+               .Skip((page - 1) * pageSize).Take(pageSize).AsEnumerable()
                .Select(d => new DismissalCaseListModel
                {
                    Id = d.ID,
@@ -57,11 +57,11 @@ namespace GotFired.DAL.Repositories
                 .Include(d => d.Applicant)
                 .Include(d => d.Comments)
                 .Include(d => d.City)
-                .Include(d => d.DismissalCaseSupprtedBys.Select(s => s.SupportedBy))
+                .Include(d => d.DismissalCaseSupprtedBys).ThenInclude(s => s.SupportedBy)
                 .Include(d => d.DeclaredTerminationReason)
                 .Include(d => d.SGKTerminationReason)
                 .Include(d => d.CompanySector)
-                .Include(d => d.DismissalCaseTags.Select(s => s.Tag))
+                .Include(d => d.DismissalCaseTags).ThenInclude(s => s.Tag)
                 .Where(d => d.ID == id)
                 .Select(d => new DismissalCaseViewModel
                 {
@@ -105,13 +105,6 @@ namespace GotFired.DAL.Repositories
         public DismissalCaseViewModel GetDismissalCaseByGuid(string guid)
         {
             var model = _dbSet
-                .Include(d => d.Applicant)
-                .Include(d => d.Comments)
-                .Include(d => d.City)
-                .Include(d => d.DismissalCaseSupprtedBys.Select(s => s.SupportedBy))
-                .Include(d => d.DeclaredTerminationReason)
-                .Include(d => d.SGKTerminationReason)
-                .Include(d => d.CompanySector)
                 .Where(d => d.Guid == guid)
                 .Select(d => new DismissalCaseViewModel
                 {
@@ -141,16 +134,34 @@ namespace GotFired.DAL.Repositories
                     SignedDocuments = d.SignedDocuments,
                     WantShareHisExperienceString = d.WantShareHisExperience ? "Evet" : "Hayır",
                     SupportedByNames = d.DismissalCaseSupprtedBys.Select(s => s.SupportedBy.Name),
-                    Notes = d.Notes,
-                    Comments = d.Comments.Select(c => new CommentViewModel
+                    Notes = d.Notes
+                })
+                // A double-clicked apply form used to store the same Guid on several cases (74 in production),
+                // which made SingleOrDefault throw. Show the newest one...
+                .OrderByDescending(d => d.Id)
+                .FirstOrDefault();
+
+            if (model != null)
+            {
+                // ...with the conversation from every case sharing the Guid, since staff replied on several of them.
+                model.Comments = _context.Comment
+                    .Where(c => _dbSet.Any(d => d.Guid == guid && d.ID == c.DismissalCaseID))
+                    .OrderBy(c => c.CreatedDate).ThenBy(c => c.ID)
+                    .Select(c => new CommentViewModel
                     {
                         DismissalCaseId = c.DismissalCaseID,
                         Text = c.Text,
                         UserName = c.UserName,
                         CreatedDate = c.CreatedDate
                     })
-                }).SingleOrDefault();
+                    .ToList();
+            }
             return model;
+        }
+
+        public bool ExistsByGuid(string guid)
+        {
+            return _dbSet.Any(d => d.Guid == guid);
         }
         public int GetCountByAppealState(AppealState appealState)
         {

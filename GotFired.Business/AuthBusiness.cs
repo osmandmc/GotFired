@@ -1,125 +1,34 @@
-﻿using GotFired.DAL;
+using GotFired.DAL;
 using GotFired.Model.ViewModels;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace GotFired.Business
 {
-    public class AuthBusiness : IDisposable
+    public class AuthBusiness
     {
-        //private AuthContext _ctx;
+        private readonly AuthRepository _authRepository;
 
-        //private UserManager<IdentityUser> _userManager;
-
-        //public AuthRepository()
-        //{
-        //    _ctx = new AuthContext();
-        //    //_userManager = new UserManager<IdentityUser>(new UserStore<IdentityUser>(_ctx));
-        //}
-        readonly UnitOfWork _unitOfWork;
-
-        public AuthBusiness()
+        public AuthBusiness(AuthRepository authRepository)
         {
-            _unitOfWork = new UnitOfWork();
-        }
-        public int GetUsersCount()
-        {
-            return _unitOfWork.AuthRepository.GetUsersCount();
-        }
-        public IEnumerable<UserListItemModel> GetUsers(int page, int pageSize)
-        {
-            return _unitOfWork.AuthRepository.GetUsers(page, pageSize);
-        }
-        public UserRoleModel GetUserRoles(string id)
-        {
-            return _unitOfWork.AuthRepository.GetUserRoles(id);
-        }
-        public IList<string> GetAllRoles()
-        {
-            return _unitOfWork.AuthRepository.GetAllRoles();
-        }
-        public void UpdateUserRoleModel(UserRoleModel userRoleModel)
-        {
-            _unitOfWork.AuthRepository.UpdateUserRoleModel(userRoleModel);
+            _authRepository = authRepository;
         }
 
-        public UserModel GetUserById(string id)
-        {
-            return _unitOfWork.AuthRepository.GetUserById(id);
-        }
+        public Task<int> GetUsersCountAsync() => _authRepository.GetUsersCountAsync();
 
+        public Task<IEnumerable<UserListItemModel>> GetUsersAsync(int page, int pageSize) => _authRepository.GetUsersAsync(page, pageSize);
 
-        public void ChangePassword(UserModel userModel)
-        {
-            _unitOfWork.AuthRepository.ChangePassword(userModel);
-            
-        }
+        public Task<UserRoleModel> GetUserRolesAsync(string id) => _authRepository.GetUserRolesAsync(id);
 
-        public void RegisterUser(UserModel userModel)
-        {
-            _unitOfWork.AuthRepository.Register(userModel);
-        }
+        public Task<IList<string>> GetAllRolesAsync() => _authRepository.GetAllRolesAsync();
 
-        public UserTokenModel FindUser(string userName, string password)
-        {
-            var user = _unitOfWork.AuthRepository.FindUser(userName, password);
-            //if(user!=null)
-            //{
+        public Task UpdateUserRoleModelAsync(UserRoleModel userRoleModel) => _authRepository.UpdateUserRoleModelAsync(userRoleModel);
 
-            //}
-            return _unitOfWork.AuthRepository.FindUser(userName,password);
-        }
+        public Task<UserModel> GetUserByIdAsync(string id) => _authRepository.GetUserByIdAsync(id);
 
-        #region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
+        public Task ChangePasswordAsync(UserModel userModel) => _authRepository.ChangePasswordAsync(userModel);
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    Debug.WriteLine("UnitOfWork is being disposed");
-                    _unitOfWork.Dispose();
-                    // TODO: dispose managed state (managed objects).
-                }
+        public Task RegisterUserAsync(UserModel userModel) => _authRepository.RegisterAsync(userModel);
 
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // TODO: set large fields to null.
-
-                disposedValue = true;
-            }
-        }
-
-        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        // ~AuthBusiness() {
-        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-        //   Dispose(false);
-        // }
-
-        // This code added to correctly implement the disposable pattern.
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above.
-            // GC.SuppressFinalize(this);
-        }
-        #endregion
-
-        //public async Task<IdentityUser> FindUser(string userName, string password)
-        //{
-        //    IdentityUser user = await _userManager.FindAsync(userName, password);
-
-        //    return user;
-        //}
-
-        //public void Dispose()
-        //{
-        //    _ctx.Dispose();
-        //    _userManager.Dispose();
-
-        //}
+        /// <summary>Returns null when the credentials are invalid.</summary>
+        public Task<UserTokenModel> FindUserAsync(string userName, string password) => _authRepository.FindUserAsync(userName, password);
     }
 }

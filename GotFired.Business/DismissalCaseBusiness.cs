@@ -1,4 +1,4 @@
-﻿using GotFired.DAL;
+using GotFired.DAL;
 using GotFired.Model;
 using System;
 using System.Collections.Generic;
@@ -13,9 +13,9 @@ namespace GotFired.Business
     {
         readonly UnitOfWork _unitOfWork;
 
-        public DismissalCaseBusiness()
+        public DismissalCaseBusiness(UnitOfWork unitOfWork)
         {
-            _unitOfWork = new UnitOfWork();
+            _unitOfWork = unitOfWork;
         }
 
         public IEnumerable<DismissalCaseListModel> GetDismissalCaseListModel(int page, int pageSize)
@@ -84,6 +84,12 @@ namespace GotFired.Business
         
         public void AddDismissalCase(DismissalCaseApplyModel model)
         {
+            // The Guid is issued by GET apply when the form loads; a second POST with the same Guid is a
+            // double-clicked submit. Accept it without storing a duplicate case.
+            if (!string.IsNullOrEmpty(model.Guid) && _unitOfWork.dismissalCaseRepository.ExistsByGuid(model.Guid))
+            {
+                return;
+            }
             DismissalCase dismissalCase = new DismissalCase
             {
                 AdditionalInfo = model.AdditionalInfo,
