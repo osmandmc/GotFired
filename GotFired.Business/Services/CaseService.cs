@@ -1,5 +1,5 @@
 using GotFired.DAL;
-using GotFired.Model.Entities.DismissalCase;
+using GotFired.Model.Entities;
 using GotFired.Model.Entities.Enums;
 using GotFired.Model.ViewModels;
 using Microsoft.EntityFrameworkCore;
@@ -57,8 +57,8 @@ namespace GotFired.Business.Services
                 OtherDeclaredTerminationReason = model.OtherDeclaredTerminationReason,
                 SignedDocuments = model.SignedDocuments,
                 WantShareHisExperience = model.WantShareHisExperience,
-                DismissalCaseSupprtedBys = (model.SupportedByIds ?? [])
-                    .Select(id => new DismissalCaseSupprtedBy { SupportedById = id })
+                DismissalCaseSupportedBys = (model.SupportedByIds ?? [])
+                    .Select(id => new DismissalCaseSupportedBy { SupportedById = id })
                     .ToList()
             };
             db.DismissalCase.Add(dismissalCase);
@@ -120,7 +120,7 @@ namespace GotFired.Business.Services
                     PhoneNumber = d.Applicant.PhoneNumber,
                     SignedDocuments = d.SignedDocuments,
                     WantShareHisExperienceString = d.WantShareHisExperience ? "Evet" : "Hayır",
-                    SupportedByNames = d.DismissalCaseSupprtedBys.Select(s => s.SupportedBy.Name).ToList(),
+                    SupportedByNames = d.DismissalCaseSupportedBys.Select(s => s.SupportedBy.Name).ToList(),
                     Notes = d.Notes,
                     CategoryId = d.CategoryID,
                     DismissalCaseTags = d.DismissalCaseTags.Select(t => new LookupIDNamePair { ID = t.TagID, Name = t.Tag.Name }).ToList(),
@@ -231,7 +231,7 @@ namespace GotFired.Business.Services
                     PhoneNumber = d.Applicant.PhoneNumber,
                     SignedDocuments = d.SignedDocuments,
                     WantShareHisExperienceString = d.WantShareHisExperience ? "Evet" : "Hayır",
-                    SupportedByNames = d.DismissalCaseSupprtedBys.Select(s => s.SupportedBy.Name).ToList(),
+                    SupportedByNames = d.DismissalCaseSupportedBys.Select(s => s.SupportedBy.Name).ToList(),
                     // Notes are staff-only and are deliberately not exposed to the applicant.
                 })
                 .Single();

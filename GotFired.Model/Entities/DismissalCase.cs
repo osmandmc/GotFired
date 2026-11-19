@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace GotFired.Model.Entities.DismissalCase
+namespace GotFired.Model.Entities
 {
     public class DismissalCase : BaseEntity
     {
@@ -29,7 +29,7 @@ namespace GotFired.Model.Entities.DismissalCase
         public string AdditionalInfo { get; set; }
         public AppealState AppealState { get; set; }
         public string Notes { get; set; }
-        public ICollection<DismissalCaseSupprtedBy> DismissalCaseSupprtedBys { get; set; }
+        public ICollection<DismissalCaseSupportedBy> DismissalCaseSupportedBys { get; set; }
         public ICollection<DismissalCaseTag> DismissalCaseTags { get; set; }
         [NotMapped]
         public int[] SupportedByIds { get; set; }

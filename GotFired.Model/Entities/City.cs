@@ -1,7 +1,7 @@
-﻿using GotFired.Model.Entities;
+using GotFired.Model.Entities;
 
 
-namespace GotFired.Model.Entities.DismissalCase
+namespace GotFired.Model.Entities
 {
     public class City : BaseEntity
     {

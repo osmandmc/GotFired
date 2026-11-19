@@ -1,5 +1,5 @@
 using GotFired.DAL;
-using GotFired.Model.Entities.DismissalCase;
+using GotFired.Model.Entities;
 using GotFired.Model.ViewModels;
 using Microsoft.EntityFrameworkCore;
 

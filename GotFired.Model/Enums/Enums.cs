@@ -77,7 +77,7 @@ namespace GotFired.Model.Entities.Enums
     public enum DismissalState : byte
     {
         [Display(Name = "İşten çıkartıldım")]
-        Dissmised = 1,
+        Dismissed = 1,
         [Display(Name = "İstifaya zorlandım / istifa ettirildim")]
         ForcedToResign = 2,
         [Display(Name = "Şu anda işten çıkarılma tehdidi altındayım")]
@@ -106,9 +106,9 @@ namespace GotFired.Model.Entities.Enums
     public enum EmployeeCount : byte
     {
         [Display(Name = "30 kişiden az")]
-        LessThenThirty = 1,
+        LessThanThirty = 1,
         [Display(Name = "30 kişi ve üstü")]
-        MoreThenThirty = 2
+        MoreThanThirty = 2
     }
     public enum EmploymentDurationSince : byte
     {

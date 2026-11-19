@@ -1,12 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GotFired.Model.Entities.DismissalCase
+namespace GotFired.Model.Entities
 {
-    public class DismissalCaseSupprtedBy: BaseEntity
+    public class DismissalCaseSupportedBy: BaseEntity
     {
         public int DismissalCaseId { get; set; }
         public int SupportedById { get; set; }

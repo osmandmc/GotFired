@@ -5,7 +5,7 @@ using GotFired.Business;
 using GotFired.Business.Email;
 using GotFired.Business.Services;
 using GotFired.DAL;
-using GotFired.Model.Identity;
+using GotFired.DAL.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;

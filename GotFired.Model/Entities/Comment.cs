@@ -1,5 +1,5 @@
-﻿
-namespace GotFired.Model.Entities.DismissalCase
+
+namespace GotFired.Model.Entities
 {
     public class Comment: BaseEntity
     {

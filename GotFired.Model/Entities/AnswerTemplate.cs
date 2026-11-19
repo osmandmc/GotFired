@@ -1,13 +1,14 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GotFired.Model.Entities.DismissalCase
+namespace GotFired.Model.Entities
 {
-    public class Tag: BaseEntity
+    public class AnswerTemplate: BaseEntity
     {
         public string Name { get; set; }
+        public string Content { get; set; }
     }
 }

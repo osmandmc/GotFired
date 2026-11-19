@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace GotFired.Model.Identity
+namespace GotFired.DAL.Identity
 {
     public class ApplicationUser : IdentityUser
     {

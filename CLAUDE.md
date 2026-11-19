@@ -27,18 +27,18 @@ Configuration lives in `appsettings*.json`, with production values in env vars: 
 
 Project references flow Api → Business → DAL → Model. Versions are central in `Directory.Packages.props`, and the target framework is set in `Directory.Build.props`. Nullable is off because the code predates it.
 
-- **Model**: EF entities (`Entities/DismissalCase/*`, derived from `BaseEntity`), enums stored as `tinyint` (`Enums/Enums.cs`, `[Display]` names are served to the UI via `EnumHelper.GetEnumLookups<T>()`), and the API shapes (`ViewModels/*`, `Dtos.cs`). Entities never cross the API boundary; DTO property names match the JSON the front end reads.
-- **DAL**: `GotFiredDbContext : IdentityDbContext<ApplicationUser>`, its migrations, and `DevDataSeeder`. `SaveChanges` stamps the audit columns, including a new string `RowVersion`. `RowVersion` is an EF concurrency token, so a stale update fails atomically (`DbUpdateConcurrencyException`). There are no repository or unit-of-work wrappers: the `DbContext` is the unit of work.
+- **Model**: EF entities (`Entities/*`, derived from `BaseEntity`), enums stored as `tinyint` (`Enums/Enums.cs`, `[Display]` names are served to the UI via `EnumHelper.GetEnumLookups<T>()`), and the API shapes (`ViewModels/*`, `Dtos.cs`). No framework dependencies. Entities never cross the API boundary; DTO property names match the JSON the front end reads.
+- **DAL**: `GotFiredDbContext : IdentityDbContext<ApplicationUser>` (`Identity/ApplicationUser.cs`), its migrations, and `DevDataSeeder`. `SaveChanges` stamps the audit columns, including a new string `RowVersion`. `RowVersion` is an EF concurrency token, so a stale update fails atomically (`DbUpdateConcurrencyException`). There are no repository or unit-of-work wrappers: the `DbContext` is the unit of work.
 - **Business**: services behind interfaces (`ICaseService`, `IAnswerTemplateService`, `IUserService`) that work on the `DbContext` with projections to DTOs. `IEmailSender` is implemented by `SmtpEmailSender` (MailKit). Time comes from `TimeProvider`. Rule violations throw `BusinessRuleException`.
 - **Api**: `Program.cs` holds all wiring. Controllers are thin: they bind the request, call a service and shape the response. Routes are attribute routes under `api/v1/<controller>/...` with `[Authorize(Roles=...)]`. `/token` (`Auth/TokenEndpoint.cs`) issues JWTs with `role` claims. Two exception handlers: `BusinessRuleExceptionHandler` turns a `BusinessRuleException` into 412 `{StatusMessage, StatusText}`, which the SPA shows as a warning toast; `EmailExceptionHandler` emails anything else and returns 500.
 
 ### Database: mapped onto a pre-existing EF6 schema
 
 The EF Core model deliberately reproduces the schema created by EF6 + ASP.NET Identity 2. Keep it that way, because production data lives in it:
-- pluralized table names (`DismissalCases`, `SupportedBies`, …)
+- pluralized table names (`DismissalCases`, `SupportedBies`, …), including the misspelled `DismissalCaseSupprtedBies` (the C# class is `DismissalCaseSupportedBy`)
 - `datetime` (not `datetime2`)
 - `nvarchar(128)` Identity keys
-- EF6-style constraint names (`PK_dbo.X`, `FK_dbo.X_dbo.Y_Col`, `IX_Col`), set in `DBContext.cs` → `ApplyEf6ConstraintNames`.
+- EF6-style constraint names (`PK_dbo.X`, `FK_dbo.X_dbo.Y_Col`, `IX_Col`), set in `GotFiredDbContext.cs` → `ApplyEf6ConstraintNames`.
 
 Existing databases are upgraded once with `db/upgrade-legacy-database.sql`. It adds the Core Identity columns and tables and marks the `Baseline` migration as applied. Fresh databases get the same schema from the `Baseline` migration. To check parity, diff the output of `db/tests/schema-snapshot.sql` between the two. The only expected difference is `AspNetUsers.LockoutEndDateUtc`, which is kept for rollback to the old app.
 

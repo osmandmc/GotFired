@@ -1,6 +1,5 @@
-﻿using GotFired.Model.Entities;
-using GotFired.Model.Entities.DismissalCase;
-using GotFired.Model.Identity;
+using GotFired.Model.Entities;
+using GotFired.DAL.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -32,7 +31,7 @@ namespace GotFired.DAL
         public DbSet<DismissalCase> DismissalCase { get; set; }
         public DbSet<SupportedBy> SupportedBy { get; set; }
         public DbSet<AnswerTemplate> AnswerTemplate { get; set; }
-        public DbSet<DismissalCaseSupprtedBy> DismissalCaseSupprtedBy { get; set; }
+        public DbSet<DismissalCaseSupportedBy> DismissalCaseSupportedBy { get; set; }
         public DbSet<SGKTerminationReason> SGKTerminationReason { get; set; }
         public DbSet<Tag> Tag { get; set; }
         public DbSet<DismissalCaseTag> DismissalCaseTag { get; set; }
@@ -56,7 +55,7 @@ namespace GotFired.DAL
             builder.Entity<CompanySector>().ToTable("CompanySectors");
             builder.Entity<DeclaredTerminationReason>().ToTable("DeclaredTerminationReasons");
             builder.Entity<DismissalCase>().ToTable("DismissalCases");
-            builder.Entity<DismissalCaseSupprtedBy>().ToTable("DismissalCaseSupprtedBies");
+            builder.Entity<DismissalCaseSupportedBy>().ToTable("DismissalCaseSupprtedBies");
             builder.Entity<DismissalCaseTag>().ToTable("DismissalCaseTags");
             builder.Entity<SGKTerminationReason>().ToTable("SGKTerminationReasons");
             builder.Entity<SupportedBy>().ToTable("SupportedBies");
@@ -80,10 +79,10 @@ namespace GotFired.DAL
                 e.HasOne(d => d.SGKTerminationReason).WithMany().HasForeignKey(d => d.SGKTerminationReasonID).OnDelete(DeleteBehavior.NoAction);
             });
 
-            builder.Entity<DismissalCaseSupprtedBy>(e =>
+            builder.Entity<DismissalCaseSupportedBy>(e =>
             {
-                e.HasOne(s => s.DismissalCase).WithMany(d => d.DismissalCaseSupprtedBys).HasForeignKey(s => s.DismissalCaseId).OnDelete(DeleteBehavior.Cascade);
-                e.HasOne(s => s.SupportedBy).WithMany(s => s.DismissalCaseSupprtedBys).HasForeignKey(s => s.SupportedById).OnDelete(DeleteBehavior.Cascade);
+                e.HasOne(s => s.DismissalCase).WithMany(d => d.DismissalCaseSupportedBys).HasForeignKey(s => s.DismissalCaseId).OnDelete(DeleteBehavior.Cascade);
+                e.HasOne(s => s.SupportedBy).WithMany(s => s.DismissalCaseSupportedBys).HasForeignKey(s => s.SupportedById).OnDelete(DeleteBehavior.Cascade);
             });
 
             builder.Entity<DismissalCaseTag>(e =>
