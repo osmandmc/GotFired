@@ -67,6 +67,8 @@ namespace GotFired.DAL
             builder.Entity<DismissalCase>(e =>
             {
                 e.Ignore(d => d.SupportedByIds);
+                e.Property(d => d.AccessTokenHash).HasMaxLength(32);
+                e.HasIndex(d => d.AccessTokenHash).IsUnique().HasFilter("[AccessTokenHash] IS NOT NULL");
                 e.HasOne(d => d.Applicant).WithMany().HasForeignKey(d => d.ApplicantId).OnDelete(DeleteBehavior.Cascade);
                 e.HasOne(d => d.City).WithMany().HasForeignKey(d => d.CityID).OnDelete(DeleteBehavior.Cascade);
                 e.HasOne(d => d.Category).WithMany().HasForeignKey(d => d.CategoryID).OnDelete(DeleteBehavior.NoAction);

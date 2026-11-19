@@ -62,6 +62,7 @@ builder.Services.AddScoped<DismissalCaseBusiness>();
 builder.Services.AddScoped<ParameterBusiness>();
 builder.Services.AddSingleton<SmtpManager>(); // stateless; also used by the singleton exception handler
 builder.Services.Configure<SmtpOptions>(config.GetSection(SmtpOptions.SectionName));
+builder.Services.Configure<ApplicantLinkOptions>(config.GetSection(ApplicantLinkOptions.SectionName));
 
 // --- Auth (replaces the OWIN OAuth authorization server) -------------------------------------
 builder.Services.Configure<JwtOptions>(config.GetSection(JwtOptions.SectionName));
@@ -117,6 +118,14 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
 var app = builder.Build();
 
 app.UseForwardedHeaders();
+app.Use((context, next) =>
+{
+    // Applicant links carry a secret token in the URL: never leak it to other sites via the Referer header
+    // (userView.html loads third-party scripts).
+    context.Response.Headers["Referrer-Policy"] = "no-referrer";
+    context.Response.Headers.XContentTypeOptions = "nosniff";
+    return next(context);
+});
 app.UseExceptionHandler();
 
 app.UseDefaultFiles();

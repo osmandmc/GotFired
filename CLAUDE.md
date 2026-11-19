@@ -47,6 +47,15 @@ Production is moving from SQL Server 2008 R2 to a new SQL Server 2022; the cutov
 
 Identity v2 password hashes still verify and are rehashed to v3 at login. While rollback to the .NET Framework app must stay possible, set `Identity:PasswordHashCompatibilityV2=true`.
 
+### Applicant links
+
+Applicants reach only `userView.html?guid=<token>`, from the email sent when staff answer:
+- The token is 256 random bits (`ApplicantAccessToken`). The database stores only its SHA-256 hash in `DismissalCases.AccessTokenHash`, with `AccessTokenExpiresAt` (`ApplicantLinks:Lifetime`, default 90 days).
+- Every staff answer issues a new token, which invalidates the previous one.
+- `userview` and `useranswer` resolve the case from the token. They ignore the case ID and name sent from the browser and never return staff `Notes`.
+- The case `Guid` is only a double-submit key. Old Guid links stopped working with this change.
+- The parameter is still called `guid` so `userView.html` works unchanged.
+
 ### Front end: AngularJS 1.x in `GotFired.Api/wwwroot`, no build step
 
 The admin SPA lives in `index.html` + `app/`. The public pages are `apply.html`, `userView.html` and `login.html`. **The API contract must stay Web API 2 compatible:**

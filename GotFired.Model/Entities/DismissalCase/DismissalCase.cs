@@ -1,4 +1,4 @@
-﻿using GotFired.Model.Entities.Enums;
+using GotFired.Model.Entities.Enums;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -34,6 +34,9 @@ namespace GotFired.Model.Entities.DismissalCase
         [NotMapped]
         public int[] SupportedByIds { get; set; }
         public int? SGKTerminationReasonID { get; set; }
+        /// <summary>SHA-256 of the applicant's secret link token (the token itself is never stored).</summary>
+        public byte[] AccessTokenHash { get; set; }
+        public DateTime? AccessTokenExpiresAt { get; set; }
         public override int Creator
         {
             get

@@ -102,10 +102,23 @@ namespace GotFired.DAL.Repositories
                 }).SingleOrDefault();
             return model;
         }
-        public DismissalCaseViewModel GetDismissalCaseByGuid(string guid)
+        /// <summary>Case ID for a valid, unexpired applicant link token hash; null otherwise.</summary>
+        public int? FindIdByAccessToken(byte[] tokenHash, DateTime now)
+        {
+            return _dbSet
+                .Where(d => d.AccessTokenHash == tokenHash && d.AccessTokenExpiresAt > now)
+                .Select(d => (int?)d.ID)
+                .SingleOrDefault();
+        }
+
+        /// <summary>
+        /// What the applicant sees on userView.html. The conversation includes every case sharing this case's Guid:
+        /// a double-clicked apply form used to store several cases with one Guid (74 in production).
+        /// </summary>
+        public DismissalCaseViewModel GetApplicantView(int id)
         {
             var model = _dbSet
-                .Where(d => d.Guid == guid)
+                .Where(d => d.ID == id)
                 .Select(d => new DismissalCaseViewModel
                 {
                     Id = d.ID,
@@ -133,19 +146,16 @@ namespace GotFired.DAL.Repositories
                     PhoneNumber = d.Applicant.PhoneNumber,
                     SignedDocuments = d.SignedDocuments,
                     WantShareHisExperienceString = d.WantShareHisExperience ? "Evet" : "Hayır",
-                    SupportedByNames = d.DismissalCaseSupprtedBys.Select(s => s.SupportedBy.Name),
-                    Notes = d.Notes
+                    SupportedByNames = d.DismissalCaseSupprtedBys.Select(s => s.SupportedBy.Name)
+                    // Notes are staff-only and are deliberately not exposed to the applicant.
                 })
-                // A double-clicked apply form used to store the same Guid on several cases (74 in production),
-                // which made SingleOrDefault throw. Show the newest one...
-                .OrderByDescending(d => d.Id)
-                .FirstOrDefault();
+                .SingleOrDefault();
 
             if (model != null)
             {
-                // ...with the conversation from every case sharing the Guid, since staff replied on several of them.
+                string guid = model.Guid;
                 model.Comments = _context.Comment
-                    .Where(c => _dbSet.Any(d => d.Guid == guid && d.ID == c.DismissalCaseID))
+                    .Where(c => _dbSet.Any(d => (d.ID == id || (guid != null && d.Guid == guid)) && d.ID == c.DismissalCaseID))
                     .OrderBy(c => c.CreatedDate).ThenBy(c => c.ID)
                     .Select(c => new CommentViewModel
                     {

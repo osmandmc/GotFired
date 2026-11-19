@@ -16,6 +16,7 @@ namespace GotFired.DAL
         private readonly GotFiredDbContext _context;
 
         private GenericRepository<City> _cityModel;
+        private GenericRepository<Applicant> _applicantModel;
         private GenericRepository<SGKTerminationReason> _sgkTerminationReasonModel;
         private GenericRepository<CompanySector> _companySectorModel;
         private GenericRepository<DeclaredTerminationReason> _declaredTerminationReasonModel;
@@ -36,6 +37,7 @@ namespace GotFired.DAL
         public IDismissalCaseRepository dismissalCaseRepository => _dismissalCaseRepository ??= new DismissalCaseRepository(_context);
         public BaseRepository<Comment> CommentRepository => _commentModel ??= new GenericRepository<Comment>(_context);
         public GenericRepository<DismissalCaseSupprtedBy> DismissalCaseSupprtedByRepository => _dismissalCaseSupprtedByModel ??= new GenericRepository<DismissalCaseSupprtedBy>(_context);
+        public GenericRepository<Applicant> ApplicantRepository => _applicantModel ??= new GenericRepository<Applicant>(_context);
         public GenericRepository<City> CityRepository => _cityModel ??= new GenericRepository<City>(_context);
         public GenericRepository<SGKTerminationReason> SGKTerminationReasonRepository => _sgkTerminationReasonModel ??= new GenericRepository<SGKTerminationReason>(_context);
         public GenericRepository<CompanySector> CompanySectorRepository => _companySectorModel ??= new GenericRepository<CompanySector>(_context);
