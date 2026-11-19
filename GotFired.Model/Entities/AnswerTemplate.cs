@@ -1,14 +1,19 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace GotFired.Model.Entities
 {
-    public class AnswerTemplate: BaseEntity
+    /// <summary>Reusable text staff insert into answers.</summary>
+    public class AnswerTemplate : BaseEntity
     {
-        public string Name { get; set; }
-        public string Content { get; set; }
+        private AnswerTemplate() { } // for EF Core
+
+        public static AnswerTemplate Create(string name, string content) => new() { Name = name, Content = content };
+
+        public string Name { get; private set; }
+        public string Content { get; private set; }
+
+        public void Edit(string name, string content)
+        {
+            Name = name;
+            Content = content;
+        }
     }
 }

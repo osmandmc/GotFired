@@ -1,4 +1,5 @@
 using GotFired.DAL;
+using GotFired.Model;
 using GotFired.Model.Entities;
 using GotFired.Model.Entities.Enums;
 using GotFired.Model.ViewModels;
@@ -29,39 +30,29 @@ namespace GotFired.Business.Services
                 return;
             }
 
-            var dismissalCase = new DismissalCase
+            var applicant = Applicant.Create(model.ApplicantFullName, model.ApplicantEmail, model.ApplicantPhoneNumber,
+                model.ApplicantGender, model.ApplicantAgeInterval, model.ApplicantEducationalState, model.ApplicantPositionId);
+            var details = new CaseDetails
             {
-                Guid = string.IsNullOrEmpty(model.Guid) ? NewApplicationGuid() : model.Guid,
-                AdditionalInfo = model.AdditionalInfo,
-                AppealState = model.AppealState,
-                Applicant = new Applicant
-                {
-                    AgeInterval = model.ApplicantAgeInterval,
-                    EducationalState = model.ApplicantEducationalState,
-                    FullName = model.ApplicantFullName,
-                    Email = model.ApplicantEmail,
-                    Gender = model.ApplicantGender,
-                    PhoneNumber = model.ApplicantPhoneNumber,
-                    PositionId = model.ApplicantPositionId
-                },
-                CityID = model.CityID,
-                CompanyDescription = model.CompanyDescription,
-                CompanySectorName = model.CompanySectorName,
-                DeclaredTerminationReasonID = model.DeclaredTerminationReasonID,
-                SGKTerminationReasonID = model.SGKTerminationReasonID,
-                DetailedExperience = model.DetailedExperience,
-                DismissalState = model.DismissalState,
-                EmployeeCount = model.EmployeeCount,
-                EmploymentDurationSince = model.EmploymentDurationSince,
+                CityId = model.CityID,
                 EmploymentTerminationDate = model.EmploymentTerminationDate,
+                DeclaredTerminationReasonId = model.DeclaredTerminationReasonID,
                 OtherDeclaredTerminationReason = model.OtherDeclaredTerminationReason,
+                SgkTerminationReasonId = model.SGKTerminationReasonID,
+                EmploymentDurationSince = model.EmploymentDurationSince,
+                EmployeeCount = model.EmployeeCount,
+                CompanySectorName = model.CompanySectorName,
+                CompanyDescription = model.CompanyDescription,
+                HasSignedAnyDocument = model.HasSignedAnyDocument,
                 SignedDocuments = model.SignedDocuments,
+                DismissalState = model.DismissalState,
                 WantShareHisExperience = model.WantShareHisExperience,
-                DismissalCaseSupportedBys = (model.SupportedByIds ?? [])
-                    .Select(id => new DismissalCaseSupportedBy { SupportedById = id })
-                    .ToList()
+                DetailedExperience = model.DetailedExperience,
+                AdditionalInfo = model.AdditionalInfo,
             };
-            db.DismissalCase.Add(dismissalCase);
+            string guid = string.IsNullOrEmpty(model.Guid) ? NewApplicationGuid() : model.Guid;
+
+            db.DismissalCase.Add(DismissalCase.Submit(guid, applicant, details, model.SupportedByIds));
             db.SaveChanges();
         }
 
@@ -120,10 +111,10 @@ namespace GotFired.Business.Services
                     PhoneNumber = d.Applicant.PhoneNumber,
                     SignedDocuments = d.SignedDocuments,
                     WantShareHisExperienceString = d.WantShareHisExperience ? "Evet" : "Hayır",
-                    SupportedByNames = d.DismissalCaseSupportedBys.Select(s => s.SupportedBy.Name).ToList(),
+                    SupportedByNames = d.Supporters.Select(s => s.SupportedBy.Name).ToList(),
                     Notes = d.Notes,
                     CategoryId = d.CategoryID,
-                    DismissalCaseTags = d.DismissalCaseTags.Select(t => new LookupIDNamePair { ID = t.TagID, Name = t.Tag.Name }).ToList(),
+                    DismissalCaseTags = d.Tags.Select(t => new LookupIDNamePair { ID = t.TagID, Name = t.Tag.Name }).ToList(),
                     Comments = d.Comments.OrderBy(c => c.CreatedDate).ThenBy(c => c.ID).Select(c => new CommentViewModel
                     {
                         DismissalCaseId = c.DismissalCaseID,
@@ -138,52 +129,40 @@ namespace GotFired.Business.Services
 
         public void SaveNotes(NoteModel model)
         {
-            FindCase(model.DismissalCaseId).Notes = model.Notes;
+            Load(model.DismissalCaseId).UpdateNotes(model.Notes);
             db.SaveChanges();
         }
 
         public void MarkAnswered(int caseId)
         {
-            FindCase(caseId).AppealState = AppealState.Answered;
+            Load(caseId).MarkAnswered();
             db.SaveChanges();
         }
 
         public void Evaluate(EvaluationViewModel model)
         {
-            db.DismissalCaseTag.RemoveRange(db.DismissalCaseTag.Where(t => t.DismissalCaseID == model.DismissalCaseId));
-            foreach (var tag in model.Tags ?? [])
-            {
-                db.DismissalCaseTag.Add(new DismissalCaseTag { DismissalCaseID = model.DismissalCaseId, TagID = tag.ID });
-            }
+            Load(model.DismissalCaseId, withTags: true).Evaluate((model.Tags ?? []).Select(t => t.ID));
             db.SaveChanges();
         }
 
         public void AddTag(TagLinkModel model)
         {
-            db.DismissalCaseTag.Add(new DismissalCaseTag { DismissalCaseID = model.DismissalCaseID, TagID = model.TagID });
+            Load(model.DismissalCaseID, withTags: true).AddTag(model.TagID);
             db.SaveChanges();
         }
 
         public void RemoveTag(TagLinkModel model)
         {
-            db.DismissalCaseTag.Remove(db.DismissalCaseTag.First(t => t.DismissalCaseID == model.DismissalCaseID && t.TagID == model.TagID));
+            Load(model.DismissalCaseID, withTags: true).RemoveTag(model.TagID);
             db.SaveChanges();
         }
 
         public ApplicantNotification Answer(int caseId, string text, string staffUserName)
         {
-            var dismissalCase = FindCase(caseId);
-            dismissalCase.AppealState = AppealState.Answered;
-
-            var (token, hash) = ApplicantAccessToken.Create();
-            dismissalCase.AccessTokenHash = hash;
-            dismissalCase.AccessTokenExpiresAt = time.GetUtcNow().UtcDateTime.Add(_linkOptions.Lifetime);
-
-            db.Comment.Add(new Comment { DismissalCaseID = caseId, Text = text, UserName = staffUserName });
+            var dismissalCase = Load(caseId, withApplicant: true);
+            string token = dismissalCase.AnswerByStaff(text, staffUserName, time.GetUtcNow().UtcDateTime, _linkOptions.Lifetime);
             db.SaveChanges();
-
-            string email = db.Applicant.Where(a => a.ID == dismissalCase.ApplicantId).Select(a => a.Email).SingleOrDefault();
-            return new ApplicantNotification(email, token);
+            return new ApplicantNotification(dismissalCase.Applicant.Email, token);
         }
 
         public IReadOnlyList<LookupIDNamePair> GetCategories() =>
@@ -200,7 +179,10 @@ namespace GotFired.Business.Services
 
         public DismissalCaseViewModel GetApplicantView(string token)
         {
-            int? caseId = FindCaseIdByToken(token);
+            byte[] hash = ApplicantAccessToken.TryHash(token);
+            if (hash == null) return null;
+            int? caseId = db.DismissalCase.Where(DismissalCase.AccessibleWith(hash, time.GetUtcNow().UtcDateTime))
+                .Select(d => (int?)d.ID).SingleOrDefault();
             if (caseId == null) return null;
 
             var model = db.DismissalCase
@@ -231,7 +213,7 @@ namespace GotFired.Business.Services
                     PhoneNumber = d.Applicant.PhoneNumber,
                     SignedDocuments = d.SignedDocuments,
                     WantShareHisExperienceString = d.WantShareHisExperience ? "Evet" : "Hayır",
-                    SupportedByNames = d.DismissalCaseSupportedBys.Select(s => s.SupportedBy.Name).ToList(),
+                    SupportedByNames = d.Supporters.Select(s => s.SupportedBy.Name).ToList(),
                     // Notes are staff-only and are deliberately not exposed to the applicant.
                 })
                 .Single();
@@ -251,38 +233,32 @@ namespace GotFired.Business.Services
 
         public CommentDto AddApplicantReply(string token, string text)
         {
-            int? caseId = FindCaseIdByToken(token);
-            if (caseId == null) return null;
+            DateTime now = time.GetUtcNow().UtcDateTime;
+            var dismissalCase = FindByToken(token, now, withApplicant: true);
+            if (dismissalCase == null) return null;
 
-            var dismissalCase = FindCase(caseId.Value);
-            dismissalCase.AppealState = AppealState.Pending;
-            var comment = new Comment
-            {
-                DismissalCaseID = dismissalCase.ID,
-                Text = text,
-                // The author is the applicant on file, never a name sent by the browser.
-                UserName = db.Applicant.Where(a => a.ID == dismissalCase.ApplicantId).Select(a => a.FullName).SingleOrDefault(),
-            };
-            db.Comment.Add(comment);
+            var comment = dismissalCase.ReplyAsApplicant(token, text, now);
             db.SaveChanges();
-
             return new CommentDto { ID = comment.ID, DismissalCaseID = comment.DismissalCaseID, Text = comment.Text, UserName = comment.UserName, CreatedDate = comment.CreatedDate };
         }
 
         // ---- helpers ------------------------------------------------------------------------------
 
-        private DismissalCase FindCase(int id) =>
-            db.DismissalCase.Find(id) ?? throw new InvalidOperationException($"Dismissal case {id} not found.");
+        private DismissalCase Load(int id, bool withTags = false, bool withApplicant = false)
+        {
+            IQueryable<DismissalCase> query = db.DismissalCase;
+            if (withTags) query = query.Include(d => d.Tags);
+            if (withApplicant) query = query.Include(d => d.Applicant);
+            return query.SingleOrDefault(d => d.ID == id) ?? throw new InvalidOperationException($"Dismissal case {id} not found.");
+        }
 
-        private int? FindCaseIdByToken(string token)
+        private DismissalCase FindByToken(string token, DateTime utcNow, bool withApplicant)
         {
             byte[] hash = ApplicantAccessToken.TryHash(token);
             if (hash == null) return null;
-            DateTime now = time.GetUtcNow().UtcDateTime;
-            return db.DismissalCase
-                .Where(d => d.AccessTokenHash == hash && d.AccessTokenExpiresAt > now)
-                .Select(d => (int?)d.ID)
-                .SingleOrDefault();
+            IQueryable<DismissalCase> query = db.DismissalCase;
+            if (withApplicant) query = query.Include(d => d.Applicant);
+            return query.SingleOrDefault(DismissalCase.AccessibleWith(hash, utcNow));
         }
     }
 }

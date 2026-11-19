@@ -1,24 +1,30 @@
 using GotFired.Model.Entities.Enums;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GotFired.Model.Entities
 {
+    /// <summary>The person who submitted a case. Set once, on submission.</summary>
     public class Applicant : BaseEntity
     {
-        public AgeInterval? AgeInterval { get; set; }
-        public EducationState? EducationalState { get; set; }
-        public Gender Gender { get; set; }
-        [EmailAddress]
-        public string Email { get; set; }
+        private Applicant() { } // for EF Core
 
-        public string PhoneNumber { get; set; }
-        public string FullName { get; set; }
-        public int? PositionId { get; set; }
+        public static Applicant Create(string fullName, string email, string phoneNumber, Gender gender,
+            AgeInterval? ageInterval, EducationState? educationalState, int? positionId) => new()
+        {
+            FullName = fullName,
+            Email = email,
+            PhoneNumber = phoneNumber,
+            Gender = gender,
+            AgeInterval = ageInterval,
+            EducationalState = educationalState,
+            PositionId = positionId,
+        };
 
+        public AgeInterval? AgeInterval { get; private set; }
+        public EducationState? EducationalState { get; private set; }
+        public Gender Gender { get; private set; }
+        public string Email { get; private set; }
+        public string PhoneNumber { get; private set; }
+        public string FullName { get; private set; }
+        public int? PositionId { get; private set; }
     }
 }

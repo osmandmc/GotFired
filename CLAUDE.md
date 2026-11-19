@@ -15,6 +15,7 @@ dotnet tool restore                # dotnet-ef from dotnet-tools.json
 dotnet ef migrations add <Name> --project GotFired.DAL --startup-project GotFired.DAL   # DB from $GOTFIRED_CONNECTION
 dotnet ef migrations has-pending-model-changes --project GotFired.DAL --startup-project GotFired.DAL
 python3 tests/api_smoke_test.py [base_url] [admin] [pw] [user] [pw]   # end-to-end contract test, writes data
+dotnet test --project tests/GotFired.Model.Tests/GotFired.Model.Tests.csproj       # domain unit tests; no database, about 1 s
 dotnet test --project tests/GotFired.Api.Tests/GotFired.Api.Tests.csproj           # integration tests; needs Docker (Testcontainers)
 dotnet test --project tests/GotFired.Api.Tests/GotFired.Api.Tests.csproj --filter-method "*Tampered*"   # one test
 ```
@@ -27,9 +28,19 @@ Configuration lives in `appsettings*.json`, with production values in env vars: 
 
 Project references flow Api → Business → DAL → Model. Versions are central in `Directory.Packages.props`, and the target framework is set in `Directory.Build.props`. Nullable is off because the code predates it.
 
-- **Model**: EF entities (`Entities/*`, derived from `BaseEntity`), enums stored as `tinyint` (`Enums/Enums.cs`, `[Display]` names are served to the UI via `EnumHelper.GetEnumLookups<T>()`), and the API shapes (`ViewModels/*`, `Dtos.cs`). No framework dependencies. Entities never cross the API boundary; DTO property names match the JSON the front end reads.
+- **Model**: the domain model (no framework dependencies).
+  - **`DismissalCase` is the aggregate root.** State has private setters. Its comments, tags and supporters are read-only collections over private lists. Every state change is a method that enforces the workflow:
+    - `Submit` (factory): a new case is always Pending.
+    - `AnswerByStaff`: Answered, a staff comment, and a new link token replacing the old one.
+    - `ReplyAsApplicant`: requires a valid unexpired token; Pending, and a comment under the applicant's name.
+    - `MarkAnswered`, `UpdateNotes`, `Evaluate` (sets tags exactly), `AddTag` (idempotent), `RemoveTag`.
+  - **Owned entities:** `Comment`, `DismissalCaseTag` and `DismissalCaseSupportedBy` have internal constructors, so only the aggregate creates them.
+  - **Other entities:** `Applicant` and `AnswerTemplate` have factories (and `Edit`). Reference data (cities, tags, reasons) is plain data.
+  - **The link rule** exists once, as `IsAccessibleWith` (in memory, constant-time) and as `AccessibleWith` (a query expression). A unit test keeps the two in agreement.
+  - **`BusinessRuleException`** is the domain's rule-violation exception.
+  - **API shapes and enums:** API shapes are in `ViewModels/*` and `Dtos.cs`; enums are stored as `tinyint` (`Enums/Enums.cs`).
 - **DAL**: `GotFiredDbContext : IdentityDbContext<ApplicationUser>` (`Identity/ApplicationUser.cs`), its migrations, and `DevDataSeeder`. `SaveChanges` stamps the audit columns, including a new string `RowVersion`. `RowVersion` is an EF concurrency token, so a stale update fails atomically (`DbUpdateConcurrencyException`). There are no repository or unit-of-work wrappers: the `DbContext` is the unit of work.
-- **Business**: services behind interfaces (`ICaseService`, `IAnswerTemplateService`, `IUserService`) that work on the `DbContext` with projections to DTOs. `IEmailSender` is implemented by `SmtpEmailSender` (MailKit). Time comes from `TimeProvider`. Rule violations throw `BusinessRuleException`.
+- **Business**: application services behind interfaces (`ICaseService`, `IAnswerTemplateService`, `IUserService`). Writes load an aggregate, call one domain method and save; there are no state changes in the services. Reads are SQL projections straight to DTOs. `IEmailSender` is implemented by `SmtpEmailSender` (MailKit). Time comes from `TimeProvider`. Rule violations throw `BusinessRuleException`.
 - **Api**: `Program.cs` holds all wiring. Controllers are thin: they bind the request, call a service and shape the response. Routes are attribute routes under `api/v1/<controller>/...` with `[Authorize(Roles=...)]`. `/token` (`Auth/TokenEndpoint.cs`) issues JWTs with `role` claims. Two exception handlers: `BusinessRuleExceptionHandler` turns a `BusinessRuleException` into 412 `{StatusMessage, StatusText}`, which the SPA shows as a warning toast; `EmailExceptionHandler` emails anything else and returns 500.
 
 ### Database: mapped onto a pre-existing EF6 schema

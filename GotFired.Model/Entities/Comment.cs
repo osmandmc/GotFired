@@ -1,10 +1,19 @@
-
 namespace GotFired.Model.Entities
 {
-    public class Comment: BaseEntity
+    /// <summary>A message in a case's conversation, by staff or the applicant. Created only by <see cref="DismissalCase"/>.</summary>
+    public class Comment : BaseEntity
     {
-        public int DismissalCaseID { get; set; }
-        public string Text { get; set; }
-        public string UserName { get; set; }
+        private Comment() { } // for EF Core
+
+        internal Comment(string text, string userName)
+        {
+            Text = text;
+            UserName = userName;
+        }
+
+        public int DismissalCaseID { get; private set; }
+        public string Text { get; private set; }
+        /// <summary>The author's display name: the staff user name or the applicant's full name.</summary>
+        public string UserName { get; private set; }
     }
 }
