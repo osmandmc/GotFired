@@ -68,7 +68,6 @@ namespace GotFired.DAL
 
             builder.Entity<DismissalCase>(e =>
             {
-                e.Ignore(d => d.SupportedByIds);
                 e.Property(d => d.AccessTokenHash).HasMaxLength(32);
                 e.HasIndex(d => d.AccessTokenHash).IsUnique().HasFilter("[AccessTokenHash] IS NOT NULL");
                 e.HasOne(d => d.Applicant).WithMany().HasForeignKey(d => d.ApplicantId).OnDelete(DeleteBehavior.Cascade);
@@ -81,13 +80,13 @@ namespace GotFired.DAL
 
             builder.Entity<DismissalCaseSupportedBy>(e =>
             {
-                e.HasOne(s => s.DismissalCase).WithMany(d => d.DismissalCaseSupportedBys).HasForeignKey(s => s.DismissalCaseId).OnDelete(DeleteBehavior.Cascade);
-                e.HasOne(s => s.SupportedBy).WithMany(s => s.DismissalCaseSupportedBys).HasForeignKey(s => s.SupportedById).OnDelete(DeleteBehavior.Cascade);
+                e.HasOne(s => s.DismissalCase).WithMany(d => d.Supporters).HasForeignKey(s => s.DismissalCaseId).OnDelete(DeleteBehavior.Cascade);
+                e.HasOne(s => s.SupportedBy).WithMany().HasForeignKey(s => s.SupportedById).OnDelete(DeleteBehavior.Cascade);
             });
 
             builder.Entity<DismissalCaseTag>(e =>
             {
-                e.HasOne(t => t.DismissalCase).WithMany(d => d.DismissalCaseTags).HasForeignKey(t => t.DismissalCaseID).OnDelete(DeleteBehavior.Cascade);
+                e.HasOne(t => t.DismissalCase).WithMany(d => d.Tags).HasForeignKey(t => t.DismissalCaseID).OnDelete(DeleteBehavior.Cascade);
                 e.HasOne(t => t.Tag).WithMany().HasForeignKey(t => t.TagID).OnDelete(DeleteBehavior.Cascade);
             });
 
@@ -153,20 +152,20 @@ namespace GotFired.DAL
             DateTime now = _time.GetLocalNow().DateTime;
             foreach (var entry in ChangeTracker.Entries<BaseEntity>().Where(e => e.State is EntityState.Added or EntityState.Modified))
             {
-                BaseEntity entity = entry.Entity;
-                entity.IsActive = true;
-                entity.IsDeleted = false;
+                // The audit properties have private setters: entities cannot change them, only persistence does.
+                entry.Property(e => e.IsActive).CurrentValue = true;
+                entry.Property(e => e.IsDeleted).CurrentValue = false;
                 if (entry.State == EntityState.Added)
                 {
-                    entity.CreatedDate = now;
+                    entry.Property(e => e.CreatedDate).CurrentValue = now;
                 }
                 else
                 {
                     entry.Property(e => e.CreatedDate).IsModified = false;
                     entry.Property(e => e.Creator).IsModified = false;
                 }
-                entity.EditedDate = now;
-                entity.RowVersion = NewRowVersion();
+                entry.Property(e => e.EditedDate).CurrentValue = now;
+                entry.Property(e => e.RowVersion).CurrentValue = NewRowVersion();
             }
         }
 

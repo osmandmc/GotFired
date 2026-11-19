@@ -1,4 +1,5 @@
 using GotFired.DAL;
+using GotFired.Model;
 using GotFired.DAL.Identity;
 using GotFired.Model.ViewModels;
 using Microsoft.AspNetCore.Identity;

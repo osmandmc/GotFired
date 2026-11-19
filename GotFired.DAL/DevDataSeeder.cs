@@ -32,47 +32,32 @@ namespace GotFired.DAL
 
             if (await context.City.AnyAsync()) return;
 
-            context.City.AddRange(Stamp(new City { Name = "İstanbul" }), Stamp(new City { Name = "Ankara" }), Stamp(new City { Name = "İzmir" }));
-            context.Category.Add(Stamp(new Category { Name = "Mobbing" }));
-            context.CompanySector.Add(Stamp(new CompanySector { Name = "İnsan Kaynakları" }));
-            context.DeclaredTerminationReason.Add(Stamp(new DeclaredTerminationReason { Name = "Performans Düşüklüğü" }));
-            context.SGKTerminationReason.Add(Stamp(new SGKTerminationReason { Code = "04", Name = "Belirsiz süreli iş sözleşmesinin işveren tarafından haklı sebep bildirilmeden feshi" }));
-            context.SupportedBy.AddRange(Stamp(new SupportedBy { Name = "Sendika" }), Stamp(new SupportedBy { Name = "Avukat" }));
-            context.AnswerTemplate.Add(Stamp(new AnswerTemplate { Name = "Karşılama", Content = "<p>Merhaba, başvurunuz için teşekkürler.</p>" }));
-            context.Tag.Add(Stamp(new Tag { Name = "tazminat" }));
+            // Audit columns (dates, RowVersion) are stamped by SaveChanges.
+            context.City.AddRange(new City { Name = "İstanbul" }, new City { Name = "Ankara" }, new City { Name = "İzmir" });
+            context.Category.Add(new Category { Name = "Mobbing" });
+            context.CompanySector.Add(new CompanySector { Name = "İnsan Kaynakları" });
+            context.DeclaredTerminationReason.Add(new DeclaredTerminationReason { Name = "Performans Düşüklüğü" });
+            context.SGKTerminationReason.Add(new SGKTerminationReason { Code = "04", Name = "Belirsiz süreli iş sözleşmesinin işveren tarafından haklı sebep bildirilmeden feshi" });
+            context.SupportedBy.AddRange(new SupportedBy { Name = "Sendika" }, new SupportedBy { Name = "Avukat" });
+            context.AnswerTemplate.Add(AnswerTemplate.Create("Karşılama", "<p>Merhaba, başvurunuz için teşekkürler.</p>"));
+            context.Tag.Add(new Tag { Name = "tazminat" });
             await context.SaveChangesAsync();
 
             var city = await context.City.OrderBy(c => c.ID).FirstAsync();
-            context.DismissalCase.Add(Stamp(new DismissalCase
+            var applicant = Applicant.Create("Örnek Başvurucu", "applicant@example.com", null, Gender.Female,
+                AgeInterval.ThirtyFiveToFortyFour, EducationState.HighSchool, null);
+            context.DismissalCase.Add(DismissalCase.Submit("0f8fad5b-d9cb-469f-a165-70867728950e", applicant, new CaseDetails
             {
-                Guid = "0f8fad5b-d9cb-469f-a165-70867728950e",
-                CityID = city.ID,
-                Applicant = Stamp(new Applicant
-                {
-                    FullName = "Örnek Başvurucu",
-                    AgeInterval = AgeInterval.ThirtyFiveToFortyFour,
-                    EducationalState = EducationState.HighSchool,
-                    Email = "applicant@example.com",
-                    Gender = Gender.Female
-                }),
+                CityId = city.ID,
                 DismissalState = DismissalState.AboutToBeDismissed,
                 EmployeeCount = EmployeeCount.MoreThanThirty,
                 EmploymentDurationSince = EmploymentDurationSince.FromOneAndHalfYearToThreeYears,
                 EmploymentTerminationDate = DateTime.Today.AddDays(-10),
-                AppealState = AppealState.Pending,
                 CompanyDescription = "Örnek şirket",
                 DetailedExperience = "Örnek deneyim",
                 WantShareHisExperience = true
-            }));
+            }, supportedByIds: []));
             await context.SaveChangesAsync();
-        }
-
-        private static T Stamp<T>(T entity) where T : BaseEntity
-        {
-            entity.CreatedDate = entity.EditedDate = DateTime.Now;
-            entity.IsActive = true;
-            entity.RowVersion = Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper() + Random.Shared.Next(10000000, 20000000);
-            return entity;
         }
     }
 }

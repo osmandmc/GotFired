@@ -1,4 +1,5 @@
 using GotFired.DAL;
+using GotFired.Model;
 using GotFired.Model.Entities;
 using GotFired.Model.ViewModels;
 using Microsoft.EntityFrameworkCore;
@@ -31,7 +32,7 @@ namespace GotFired.Business.Services
 
         public void Create(AnswerTemplateCreateModel model)
         {
-            db.AnswerTemplate.Add(new AnswerTemplate { Name = model.Name, Content = model.Content });
+            db.AnswerTemplate.Add(AnswerTemplate.Create(model.Name, model.Content));
             db.SaveChanges();
         }
 
@@ -41,8 +42,7 @@ namespace GotFired.Business.Services
                            ?? throw new BusinessRuleException("Şablon bulunamadı.");
             // Optimistic concurrency: the UPDATE only matches if RowVersion is still what the editor loaded.
             db.Entry(template).Property(t => t.RowVersion).OriginalValue = model.RowVersion;
-            template.Name = model.Name;
-            template.Content = model.Content;
+            template.Edit(model.Name, model.Content);
             try
             {
                 db.SaveChanges();

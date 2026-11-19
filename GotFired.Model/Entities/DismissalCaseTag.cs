@@ -1,17 +1,15 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace GotFired.Model.Entities
 {
-    public class DismissalCaseTag: BaseEntity
+    /// <summary>A tag on a case. Created only by <see cref="DismissalCase"/>.</summary>
+    public class DismissalCaseTag : BaseEntity
     {
-        public int DismissalCaseID { get; set; }
-        public int TagID { get; set; }
+        private DismissalCaseTag() { } // for EF Core
 
-        public DismissalCase DismissalCase { get; set; }
-        public Tag Tag { get; set; }
+        internal DismissalCaseTag(int tagId) => TagID = tagId;
+
+        public int DismissalCaseID { get; private set; }
+        public int TagID { get; private set; }
+        public DismissalCase DismissalCase { get; private set; }
+        public Tag Tag { get; private set; }
     }
 }

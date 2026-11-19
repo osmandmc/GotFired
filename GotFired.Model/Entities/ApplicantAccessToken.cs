@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 
-namespace GotFired.Business
+namespace GotFired.Model.Entities
 {
     /// <summary>
     /// Secret tokens for the applicant's link (userView.html?guid=&lt;token&gt;). 256 random bits, base64url so it is

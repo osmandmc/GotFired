@@ -1,4 +1,4 @@
-namespace GotFired.Business
+namespace GotFired.Model
 {
     /// <summary>
     /// A request the business rules reject (stale edit, invalid password, ...). Returned as HTTP 412 with

@@ -1,4 +1,4 @@
-using GotFired.Business;
+using GotFired.Model;
 using Microsoft.AspNetCore.Diagnostics;
 
 namespace GotFired.Api.Infrastructure
