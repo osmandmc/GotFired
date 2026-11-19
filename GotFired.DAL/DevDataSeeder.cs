@@ -1,7 +1,6 @@
 using GotFired.Model.Entities;
-using GotFired.Model.Entities.DismissalCase;
 using GotFired.Model.Entities.Enums;
-using GotFired.Model.Identity;
+using GotFired.DAL.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -57,7 +56,7 @@ namespace GotFired.DAL
                     Gender = Gender.Female
                 }),
                 DismissalState = DismissalState.AboutToBeDismissed,
-                EmployeeCount = EmployeeCount.MoreThenThirty,
+                EmployeeCount = EmployeeCount.MoreThanThirty,
                 EmploymentDurationSince = EmploymentDurationSince.FromOneAndHalfYearToThreeYears,
                 EmploymentTerminationDate = DateTime.Today.AddDays(-10),
                 AppealState = AppealState.Pending,

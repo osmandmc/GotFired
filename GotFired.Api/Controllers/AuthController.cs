@@ -1,4 +1,4 @@
-using GotFired.Business;
+using GotFired.Business.Services;
 using GotFired.Model.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,77 +7,54 @@ namespace GotFired.Api.Controllers
 {
     [ApiController]
     [Route("api/v1/auth")]
-    public class AuthController : ControllerBase
+    public class AuthController(IUserService users) : ControllerBase
     {
-        private readonly AuthBusiness _authBusiness;
-        private const int pageSize = 20;
-
-        public AuthController(AuthBusiness authBusiness)
-        {
-            _authBusiness = authBusiness;
-        }
+        private const int PageSize = 20;
+        // The SPA shows this text after every successful change (Web API 2 returned it as a JSON string).
+        private const string Saved = "Üyelik bilgileriniz alınmıştır.";
 
         [Authorize(Roles = "admin, user")]
         [HttpGet("index/{page}")]
         public async Task<IActionResult> Index(int page = 1)
         {
-            var users = await _authBusiness.GetUsersAsync(page, pageSize);
-            int count = await _authBusiness.GetUsersCountAsync();
-            return Ok(new
-            {
-                data = users,
-                paging = new Paging
-                {
-                    CurrentPage = page,
-                    ItemsPerPage = pageSize,
-                    TotalItems = count
-                }
-            });
+            var (list, total) = await users.ListAsync(page, PageSize);
+            return Ok(new { data = list, paging = new Paging { CurrentPage = page, ItemsPerPage = PageSize, TotalItems = total } });
         }
 
         [Authorize(Roles = "admin")]
         [HttpPost("create")]
         public async Task<IActionResult> Create(UserModel userModel)
         {
-            await _authBusiness.RegisterUserAsync(userModel);
-            return Ok("Üyelik bilgileriniz alınmıştır.");
+            await users.CreateAsync(userModel);
+            return Ok(Saved);
         }
 
         [Authorize(Roles = "admin")]
         [HttpPost("changePassword")]
         public async Task<IActionResult> ChangePassword(UserModel userModel)
         {
-            await _authBusiness.ChangePasswordAsync(userModel);
-            return Ok("Üyelik bilgileriniz alınmıştır.");
+            await users.ChangePasswordAsync(userModel);
+            return Ok(Saved);
         }
 
         [Authorize(Roles = "admin, user")]
         [HttpGet("getUserById/{id}")]
-        public async Task<IActionResult> GetUserById(string id)
-        {
-            return Ok(await _authBusiness.GetUserByIdAsync(id));
-        }
+        public async Task<IActionResult> GetUserById(string id) => Ok(await users.GetAsync(id));
 
         [Authorize(Roles = "admin, user")]
         [HttpGet("getUserRoles/{id}")]
-        public async Task<IActionResult> GetUserRoles(string id)
-        {
-            return Ok(await _authBusiness.GetUserRolesAsync(id));
-        }
+        public async Task<IActionResult> GetUserRoles(string id) => Ok(await users.GetRolesAsync(id));
 
         [Authorize(Roles = "admin, user")]
         [HttpGet("getAllRoles")]
-        public async Task<IActionResult> GetAllRoles()
-        {
-            return Ok(await _authBusiness.GetAllRolesAsync());
-        }
+        public async Task<IActionResult> GetAllRoles() => Ok(await users.GetAllRolesAsync());
 
         [Authorize(Roles = "admin")]
         [HttpPost("updateUserRoles")]
         public async Task<IActionResult> UpdateUserRoles(UserRoleModel userRoleModel)
         {
-            await _authBusiness.UpdateUserRoleModelAsync(userRoleModel);
-            return Ok("Üyelik bilgileriniz alınmıştır.");
+            await users.UpdateRolesAsync(userRoleModel);
+            return Ok(Saved);
         }
 
         // Anonymous self-registration (a POST by Web API 2 convention). Not used by the SPA; kept for parity.
@@ -86,8 +63,8 @@ namespace GotFired.Api.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register(UserModel userModel)
         {
-            await _authBusiness.RegisterUserAsync(userModel);
-            return Ok("Üyelik bilgileriniz alınmıştır.");
+            await users.CreateAsync(userModel);
+            return Ok(Saved);
         }
     }
 }

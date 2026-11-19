@@ -1,4 +1,4 @@
-using GotFired.Business;
+using GotFired.Business.Services;
 using Microsoft.AspNetCore.WebUtilities;
 
 namespace GotFired.Api.Auth
@@ -17,7 +17,7 @@ namespace GotFired.Api.Auth
             return app;
         }
 
-        private static async Task<IResult> HandleAsync(HttpRequest request, AuthBusiness authBusiness, TokenService tokenService)
+        private static async Task<IResult> HandleAsync(HttpRequest request, IUserService users, TokenService tokenService)
         {
             using var reader = new StreamReader(request.Body);
             var form = QueryHelpers.ParseQuery(await reader.ReadToEndAsync());
@@ -27,7 +27,7 @@ namespace GotFired.Api.Auth
                 return Results.BadRequest(new { error = "unsupported_grant_type" });
             }
 
-            var user = await authBusiness.FindUserAsync(form["username"], form["password"]);
+            var user = await users.FindUserAsync(form["username"], form["password"]);
             if (user == null)
             {
                 return Results.BadRequest(new { error = "invalid_grant", error_description = "The user name or password is incorrect." });

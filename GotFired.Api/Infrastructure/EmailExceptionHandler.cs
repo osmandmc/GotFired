@@ -1,4 +1,4 @@
-using GotFired.Business;
+using GotFired.Business.Email;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc.Controllers;
 
@@ -10,24 +10,26 @@ namespace GotFired.Api.Infrastructure
     /// </summary>
     public class EmailExceptionHandler : IExceptionHandler
     {
-        private readonly SmtpManager _smtpManager;
+        private readonly IEmailSender _email;
         private readonly ILogger<EmailExceptionHandler> _logger;
 
-        public EmailExceptionHandler(SmtpManager smtpManager, ILogger<EmailExceptionHandler> logger)
+        public EmailExceptionHandler(IEmailSender email, ILogger<EmailExceptionHandler> logger)
         {
-            _smtpManager = smtpManager;
+            _email = email;
             _logger = logger;
         }
 
         public ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
         {
-            string action = httpContext.GetEndpoint()?.Metadata.GetMetadata<ControllerActionDescriptor>()?.ActionName
+            // The exception middleware clears the current endpoint before handlers run; the feature keeps the original.
+            var endpoint = httpContext.Features.Get<IExceptionHandlerFeature>()?.Endpoint ?? httpContext.GetEndpoint();
+            string action = endpoint?.Metadata.GetMetadata<ControllerActionDescriptor>()?.ActionName
                             ?? httpContext.Request.Path;
             _logger.LogError(exception, "Unhandled exception in {Action}", action);
 
             try
             {
-                _smtpManager.ExceptionMail(string.Format("ActionName: {0} Exception Message: {1} InnerException Message: {2} ",
+                _email.SendErrorReport(string.Format("ActionName: {0} Exception Message: {1} InnerException Message: {2} ",
                     action, exception.Message, exception.InnerException?.Message));
             }
             catch (Exception mailException)

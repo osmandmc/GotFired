@@ -3,4 +3,5 @@
   <Project Path="GotFired.Business/GotFired.Business.csproj" />
   <Project Path="GotFired.DAL/GotFired.DAL.csproj" />
   <Project Path="GotFired.Model/GotFired.Model.csproj" />
+  <Project Path="tests/GotFired.Api.Tests/GotFired.Api.Tests.csproj" />
 </Solution>
