@@ -21,7 +21,9 @@ namespace GotFired.Api.Infrastructure
 
         public ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
         {
-            string action = httpContext.GetEndpoint()?.Metadata.GetMetadata<ControllerActionDescriptor>()?.ActionName
+            // The exception middleware clears the current endpoint before handlers run; the feature keeps the original.
+            var endpoint = httpContext.Features.Get<IExceptionHandlerFeature>()?.Endpoint ?? httpContext.GetEndpoint();
+            string action = endpoint?.Metadata.GetMetadata<ControllerActionDescriptor>()?.ActionName
                             ?? httpContext.Request.Path;
             _logger.LogError(exception, "Unhandled exception in {Action}", action);
 

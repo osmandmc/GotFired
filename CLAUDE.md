@@ -15,9 +15,11 @@ dotnet tool restore                # dotnet-ef from dotnet-tools.json
 dotnet ef migrations add <Name> --project GotFired.DAL --startup-project GotFired.DAL   # DB from $GOTFIRED_CONNECTION
 dotnet ef migrations has-pending-model-changes --project GotFired.DAL --startup-project GotFired.DAL
 python3 tests/api_smoke_test.py [base_url] [admin] [pw] [user] [pw]   # end-to-end contract test, writes data
+dotnet test --project tests/GotFired.Api.Tests/GotFired.Api.Tests.csproj           # integration tests; needs Docker (Testcontainers)
+dotnet test --project tests/GotFired.Api.Tests/GotFired.Api.Tests.csproj --filter-method "*Tampered*"   # one test
 ```
 
-There are no unit tests. `tests/api_smoke_test.py` is the regression net for the HTTP contract. Its defaults target a DB built from `db/tests/legacy-ef6-schema.sql` + `db/upgrade-legacy-database.sql` (users `legacy-admin`/`legacy-user`, password `legacy-pass`). Set `MAILPIT_URL` to also check outgoing mail.
+`tests/GotFired.Api.Tests` is the regression net. It holds behaviour tests at the HTTP boundary, run in-process against SQL Server 2022 and Mailpit in Testcontainers. Its database is built like production on cutover day: EF6 fixture with Turkish collation → level 160 → upgrade script → `migrations.sql`. A schema-parity test compares it with a migrations-only database. Tests share the database and run in parallel, so each test creates its own uniquely named data. When running inside a container, set `TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal` and mount the Docker socket. `tests/api_smoke_test.py` is the same check as a script for a deployed instance. Its defaults target a DB built from `db/tests/legacy-ef6-schema.sql` + `db/upgrade-legacy-database.sql` (users `legacy-admin`/`legacy-user`, password `legacy-pass`). Set `MAILPIT_URL` to also check outgoing mail.
 
 Configuration lives in `appsettings*.json`, with production values in env vars: `ConnectionStrings__GotFired`, `Jwt__Key` (≥32 bytes), `Smtp__*`. `Seed:Enabled` runs migrations plus `DevDataSeeder` on startup (Development only).
 
