@@ -16,8 +16,11 @@ namespace GotFired.DAL
     /// </summary>
     public class GotFiredDbContext : IdentityDbContext<ApplicationUser>
     {
-        public GotFiredDbContext(DbContextOptions<GotFiredDbContext> options) : base(options)
+        private readonly TimeProvider _time;
+
+        public GotFiredDbContext(DbContextOptions<GotFiredDbContext> options, TimeProvider timeProvider) : base(options)
         {
+            _time = timeProvider;
         }
 
         public DbSet<Applicant> Applicant { get; set; }
@@ -120,8 +123,56 @@ namespace GotFired.DAL
                 e.Property(t => t.Name).HasMaxLength(128);
             });
 
+            // RowVersion is a 16-character string the old app generated on every save. Making it a concurrency token
+            // turns the check into "UPDATE ... WHERE RowVersion = <value read>", which is atomic.
+            foreach (var entity in builder.Model.GetEntityTypes().Where(t => typeof(BaseEntity).IsAssignableFrom(t.ClrType)))
+            {
+                builder.Entity(entity.ClrType).Property(nameof(BaseEntity.RowVersion)).IsConcurrencyToken();
+            }
+
             ApplyEf6ConstraintNames(builder);
         }
+
+        public override int SaveChanges(bool acceptAllChangesOnSuccess)
+        {
+            StampAuditFields();
+            return base.SaveChanges(acceptAllChangesOnSuccess);
+        }
+
+        public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+        {
+            StampAuditFields();
+            return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        }
+
+        /// <summary>
+        /// Audit columns every application table has: created/edited time (server local time, as the old app stored
+        /// it), active/deleted flags, and a new RowVersion on each save.
+        /// </summary>
+        private void StampAuditFields()
+        {
+            DateTime now = _time.GetLocalNow().DateTime;
+            foreach (var entry in ChangeTracker.Entries<BaseEntity>().Where(e => e.State is EntityState.Added or EntityState.Modified))
+            {
+                BaseEntity entity = entry.Entity;
+                entity.IsActive = true;
+                entity.IsDeleted = false;
+                if (entry.State == EntityState.Added)
+                {
+                    entity.CreatedDate = now;
+                }
+                else
+                {
+                    entry.Property(e => e.CreatedDate).IsModified = false;
+                    entry.Property(e => e.Creator).IsModified = false;
+                }
+                entity.EditedDate = now;
+                entity.RowVersion = NewRowVersion();
+            }
+        }
+
+        private static string NewRowVersion() =>
+            Guid.NewGuid().ToString("N")[..8].ToUpperInvariant() + Random.Shared.Next(10000000, 20000000);
 
         /// <summary>
         /// EF6 named constraints "PK_dbo.Table", "FK_dbo.Table_dbo.Principal_Column" and indexes "IX_Column".

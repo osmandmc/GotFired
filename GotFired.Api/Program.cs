@@ -2,6 +2,8 @@ using System.Text;
 using GotFired.Api.Auth;
 using GotFired.Api.Infrastructure;
 using GotFired.Business;
+using GotFired.Business.Email;
+using GotFired.Business.Services;
 using GotFired.DAL;
 using GotFired.Model.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -55,12 +57,11 @@ builder.Services.Configure<PasswordHasherOptions>(o =>
 });
 
 // --- Application services ---------------------------------------------------------------------
-builder.Services.AddScoped<UnitOfWork>();
-builder.Services.AddScoped<AuthRepository>();
-builder.Services.AddScoped<AuthBusiness>();
-builder.Services.AddScoped<DismissalCaseBusiness>();
-builder.Services.AddScoped<ParameterBusiness>();
-builder.Services.AddSingleton<SmtpManager>(); // stateless; also used by the singleton exception handler
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<ICaseService, CaseService>();
+builder.Services.AddScoped<IAnswerTemplateService, AnswerTemplateService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>(); // stateless; also used by the singleton exception handler
 builder.Services.Configure<SmtpOptions>(config.GetSection(SmtpOptions.SectionName));
 builder.Services.Configure<ApplicantLinkOptions>(config.GetSection(ApplicantLinkOptions.SectionName));
 
@@ -104,6 +105,8 @@ builder.Services.Configure<ApiBehaviorOptions>(o =>
     o.SuppressModelStateInvalidFilter = true;
 });
 
+// Order matters: rule violations are answered with 412 before anything is treated as an error.
+builder.Services.AddExceptionHandler<BusinessRuleExceptionHandler>();
 builder.Services.AddExceptionHandler<EmailExceptionHandler>();
 builder.Services.AddProblemDetails();
 

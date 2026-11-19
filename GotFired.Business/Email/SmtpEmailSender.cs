@@ -3,27 +3,22 @@ using MailKit.Security;
 using Microsoft.Extensions.Options;
 using MimeKit;
 
-namespace GotFired.Business
+namespace GotFired.Business.Email
 {
-    public class SmtpManager
+    public class SmtpEmailSender(IOptions<SmtpOptions> options) : IEmailSender
     {
-        private readonly SmtpOptions _options;
+        private readonly SmtpOptions _options = options.Value;
 
-        public SmtpManager(IOptions<SmtpOptions> options)
+        public void SendApplicantLink(string emailAddress, string accessToken)
         {
-            _options = options.Value;
-        }
-
-        /// <param name="accessToken">The applicant's secret link token (userView.html reads it from ?guid=).</param>
-        public void SendEmail(string emailAdress, string accessToken)
-        {
+            // userView.html reads the token from ?guid=
             string link = $"{_options.PublicBaseUrl?.TrimEnd('/')}/userview.html?guid={Uri.EscapeDataString(accessToken ?? string.Empty)}";
-            Send(emailAdress,
+            Send(emailAddress,
                 "İşten Atıldım Başvurunuz Hk.",
                 "Merhaba,  <p>istenatildim.org sitesine yapmış olduğunuz başvurunun cevabını görmek ve isterseniz görüşmeyi devam ettirmek için şu <a href = '" + link + "'>linke</a> tıklayın.</p>");
         }
 
-        public void ExceptionMail(string text)
+        public void SendErrorReport(string text)
         {
             if (string.IsNullOrWhiteSpace(_options.ExceptionRecipient)) return;
             Send(_options.ExceptionRecipient, "Exception: " + _options.PublicBaseUrl, text);

@@ -49,7 +49,8 @@ public class AnswerTemplateTests(TestEnvironment env)
         mine["Content"] = "<p>mine</p>";
         var stale = await admin.PostJsonAsync("/api/v1/answerTemplate/update", mine);
 
-        Assert.NotEqual(HttpStatusCode.OK, stale.Status);
+        Assert.Equal(HttpStatusCode.PreconditionFailed, stale.Status);   // shown by the SPA as a warning toast
+        Assert.StartsWith("Başka bir kullanıcı güncelleme yapmakta", (string)stale["StatusMessage"]);
         Assert.Equal("<p>theirs</p>", (string)(await admin.GetAsync($"/api/v1/answerTemplate/getById/{id}"))["Content"]);
     }
 }
@@ -98,6 +99,20 @@ public class UserManagementTests(TestEnvironment env)
     }
 
     [Fact]
+    public async Task A_too_short_password_is_refused_with_a_message_and_the_old_password_keeps_working()
+    {
+        var admin = await AdminAsync();
+        string userName = TestData.Unique("personel");
+        await admin.PostJsonAsync("/api/v1/auth/create", new { UserName = userName, Password = "abcdef" });
+
+        var response = await admin.PostJsonAsync("/api/v1/auth/changePassword", new { UserName = userName, Password = "abc" });
+
+        Assert.Equal(HttpStatusCode.PreconditionFailed, response.Status);
+        Assert.Equal("Kullanıcı parolası 6 karakterden az olamaz.", (string)response["StatusMessage"]);
+        Assert.Equal(HttpStatusCode.OK, (await env.CreateClient().RequestTokenAsync(userName, "abcdef")).Status);
+    }
+
+    [Fact]
     public async Task All_roles_are_listed()
     {
         var roles = await (await AdminAsync()).GetAsync("/api/v1/auth/getAllRoles");
@@ -139,7 +154,7 @@ public class SchemaTests(TestEnvironment env)
     [Fact]
     public async Task Upgraded_legacy_database_matches_a_database_created_by_the_migrations()
     {
-        string snapshot = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "db/tests/schema-snapshot.sql"));
+        string snapshot = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "db/tests/schema-snapshot.sql"), TestContext.Current.CancellationToken);
 
         var legacy = await SqlScript.QueryLinesAsync(env.LegacyConnectionString, snapshot);
         var fresh = await SqlScript.QueryLinesAsync(env.FreshConnectionString, snapshot);

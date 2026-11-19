@@ -3,6 +3,7 @@ using DotNet.Testcontainers.Containers;
 using GotFired.DAL;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,12 +25,10 @@ public sealed class TestEnvironment : IAsyncLifetime
     public const string PlainUser = "legacy-user";       // role "user"
     public const string LegacyPassword = "legacy-pass";
 
-    private readonly MsSqlContainer _sql = new MsSqlBuilder()
-        .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+    private readonly MsSqlContainer _sql = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
         .Build();
 
-    private readonly IContainer _mailpit = new ContainerBuilder()
-        .WithImage("axllent/mailpit:v1.27")
+    private readonly IContainer _mailpit = new ContainerBuilder("axllent/mailpit:v1.27")
         .WithPortBinding(1025, true)
         .WithPortBinding(8025, true)
         .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(r => r.ForPort(8025).ForPath("/api/v1/messages")))
@@ -59,7 +58,7 @@ public sealed class TestEnvironment : IAsyncLifetime
         await SqlScript.RunFileAsync(LegacyConnectionString, "db/upgrade-legacy-database.sql");
         await SqlScript.RunFileAsync(LegacyConnectionString, "db/migrations.sql");
 
-        await using (var fresh = new GotFiredDbContext(new DbContextOptionsBuilder<GotFiredDbContext>().UseSqlServer(FreshConnectionString).Options))
+        await using (var fresh = new GotFiredDbContext(new DbContextOptionsBuilder<GotFiredDbContext>().UseSqlServer(FreshConnectionString).Options, TimeProvider.System))
         {
             await fresh.Database.MigrateAsync();
         }
@@ -84,12 +83,25 @@ public sealed class TestEnvironment : IAsyncLifetime
         });
     }
 
+    private readonly List<WebApplicationFactory<Program>> _variants = [];
+
     /// <summary>A client that does not follow redirects and keeps no cookies, like the SPA's XHR calls.</summary>
-    public ApiClient CreateClient() =>
-        new(_factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false, HandleCookies = false }), Mail);
+    public ApiClient CreateClient() => CreateClient(_factory);
+
+    /// <summary>A client for an API instance with some services replaced (e.g. a fake clock). Same database.</summary>
+    public ApiClient CreateClient(Action<IServiceCollection> replaceServices)
+    {
+        var variant = _factory.WithWebHostBuilder(b => b.ConfigureTestServices(replaceServices));
+        lock (_variants) _variants.Add(variant);
+        return CreateClient(variant);
+    }
+
+    private ApiClient CreateClient(WebApplicationFactory<Program> factory) =>
+        new(factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false, HandleCookies = false }), Mail);
 
     public async ValueTask DisposeAsync()
     {
+        foreach (var variant in _variants) await variant.DisposeAsync();
         if (_factory != null) await _factory.DisposeAsync();
         await Task.WhenAll(_sql.DisposeAsync().AsTask(), _mailpit.DisposeAsync().AsTask());
     }

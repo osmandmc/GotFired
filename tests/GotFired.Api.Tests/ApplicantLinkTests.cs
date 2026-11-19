@@ -1,5 +1,7 @@
 using System.Net;
 using GotFired.Api.Tests.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Time.Testing;
 
 namespace GotFired.Api.Tests;
 
@@ -126,6 +128,25 @@ public class ApplicantLinkTests(TestEnvironment env)
         var response = await env.CreateClient().GetAsync($"/api/v1/dismissalcase/userview/{tampered}");
 
         Assert.Equal(HttpStatusCode.BadRequest, response.Status);
+    }
+
+    [Fact]
+    public async Task Link_expires_after_90_days()
+    {
+        var clock = new FakeTimeProvider(DateTimeOffset.UtcNow);
+        var (caseId, _, _, email) = await TestData.CreateCaseAsync(env);
+        var admin = await env.CreateClient(s => s.AddSingleton<TimeProvider>(clock)).LoginAsync(TestEnvironment.AdminUser, TestEnvironment.LegacyPassword);
+        await TestData.AnswerAsync(admin, caseId, "<p>cevap</p>");
+        string link = await env.Mail.LatestApplicantLinkTokenAsync(email);
+        var applicant = env.CreateClient(s => s.AddSingleton<TimeProvider>(clock));
+
+        clock.Advance(TimeSpan.FromDays(89));
+        var stillValid = await applicant.GetAsync($"/api/v1/dismissalcase/userview/{link}");
+        clock.Advance(TimeSpan.FromDays(2));
+        var expired = await applicant.GetAsync($"/api/v1/dismissalcase/userview/{link}");
+
+        Assert.Equal(HttpStatusCode.OK, stillValid.Status);
+        Assert.Equal(HttpStatusCode.BadRequest, expired.Status);
     }
 
     private Task<int> CommentCountAsync(int caseId) =>
