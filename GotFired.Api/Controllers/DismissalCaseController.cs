@@ -162,11 +162,14 @@ namespace GotFired.Api.Controllers
             }
             return Ok(dismissalCaseViewModel);
         }
+        // The route parameter is named "guid" because userView.html builds the URL from ?guid=; since the link
+        // security fix it carries the applicant's secret link token, not the case Guid.
         [AllowAnonymous]
         [HttpGet("userview/{guid}")]
         public IActionResult UserView(string guid)
         {
-            var dismissalCase = _dismissalCaseBusiness.GetDismissalCaseByGuid(guid);
+            Response.Headers.CacheControl = "no-store";
+            var dismissalCase = _dismissalCaseBusiness.GetApplicantView(guid);
             if (dismissalCase == null)
             {
                 return BadRequest(new { Message = "model cannot be null" });
@@ -177,10 +180,16 @@ namespace GotFired.Api.Controllers
         [HttpPost("answer")]
         public IActionResult Answer(CommentViewModel commentViewModel)
         {
-            _smtpManager.SendEmail(commentViewModel.EmailAddress, commentViewModel.Guid);
-            _dismissalCaseBusiness.UpdateDismissalCaseByUserAnswer(commentViewModel);
+            // Recipient, link and author come from the case record and the signed-in user, not the request body.
+            var notification = _dismissalCaseBusiness.AnswerCase(
+                commentViewModel.DismissalCaseId, commentViewModel.Text, User.Identity?.Name ?? commentViewModel.UserName);
+            if (!string.IsNullOrWhiteSpace(notification.Email))
+            {
+                _smtpManager.SendEmail(notification.Email, notification.Token);
+            }
             return Ok();
         }
+
         [HttpPost("postNotes")]
         public IActionResult PostNotes(NoteModel noteModel)
         {
@@ -197,15 +206,13 @@ namespace GotFired.Api.Controllers
         [HttpPost("useranswer")]
         public IActionResult UserAnswer([FromForm] CommentViewModel commentViewModel)
         {
-            Comment comment = new Comment
+            Response.Headers.CacheControl = "no-store";
+            // Guid carries the link token; DismissalCaseId and UserName from the form are ignored.
+            var comment = _dismissalCaseBusiness.AddApplicantReply(commentViewModel.Guid, commentViewModel.Text);
+            if (comment == null)
             {
-                DismissalCaseID = commentViewModel.DismissalCaseId,
-                Text = commentViewModel.Text,
-                UserName = commentViewModel.UserName,
-                CreatedDate = commentViewModel.CreatedDate
-            };
-            //_dismissalCaseBusiness.AddComment(comment);
-            _dismissalCaseBusiness.UpdateDismissalCaseByApplicantAnswer(comment, commentViewModel.Guid);
+                return BadRequest(new { Message = "model cannot be null" });
+            }
             return Ok(comment);
         }
 

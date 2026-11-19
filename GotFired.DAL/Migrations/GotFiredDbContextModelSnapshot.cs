@@ -340,6 +340,13 @@ namespace GotFired.DAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
 
+                    b.Property<DateTime?>("AccessTokenExpiresAt")
+                        .HasColumnType("datetime");
+
+                    b.Property<byte[]>("AccessTokenHash")
+                        .HasMaxLength(32)
+                        .HasColumnType("varbinary(32)");
+
                     b.Property<string>("AdditionalInfo")
                         .HasColumnType("nvarchar(max)");
 
@@ -428,6 +435,11 @@ namespace GotFired.DAL.Migrations
 
                     b.HasKey("ID")
                         .HasName("PK_dbo.DismissalCases");
+
+                    b.HasIndex("AccessTokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("IX_AccessTokenHash")
+                        .HasFilter("[AccessTokenHash] IS NOT NULL");
 
                     b.HasIndex("ApplicantId")
                         .HasDatabaseName("IX_ApplicantId");

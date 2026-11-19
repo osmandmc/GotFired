@@ -1,4 +1,4 @@
-﻿using GotFired.Model.Entities.DismissalCase;
+using GotFired.Model.Entities.DismissalCase;
 using GotFired.Model.Entities.Enums;
 using GotFired.Model.ViewModels;
 using System;
@@ -23,7 +23,6 @@ namespace GotFired.Model
         IEnumerable<DismissalCaseListModel> GetDismissalCaseListModel(int page, int pageSize);
         IEnumerable<DismissalCaseListModel> GetDismissalCaseListModelByStatus(AppealState status, int page, int pageSize);
         DismissalCaseViewModel GetDismissalCaseById(int id);
-        DismissalCaseViewModel GetDismissalCaseByGuid(string guid);
 
         void AddDismissalCase(DismissalCaseApplyModel model);
         string GetInitializer();
@@ -33,7 +32,6 @@ namespace GotFired.Model
         IEnumerable<Category> GetCategories();
         IEnumerable<Tag> GetTags(string searchText);
         void UpdateDismissalCaseByAppealState(int dismissalCaseId);
-        void UpdateDismissalCaseByUserAnswer(CommentViewModel commentViewModel);
 
         void Evaluate(EvaluationViewModel model);
         void AddDismissalCaseTag(DismissalCaseTag model);

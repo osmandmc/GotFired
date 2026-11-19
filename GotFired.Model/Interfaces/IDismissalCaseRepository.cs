@@ -14,7 +14,8 @@ namespace GotFired.Model.Interfaces
         IEnumerable<DismissalCaseListModel> GetDismissalCaseListModel(int page, int pageSize);
         IEnumerable<DismissalCaseListModel> GetDismissalCasesByStatus(AppealState appealState, int page, int pageSize);
         DismissalCaseViewModel GetDismissalCaseById(int id);
-        DismissalCaseViewModel GetDismissalCaseByGuid(string guid);
+        int? FindIdByAccessToken(byte[] tokenHash, DateTime now);
+        DismissalCaseViewModel GetApplicantView(int id);
         bool ExistsByGuid(string guid);
         int GetCountByAppealState(AppealState appealState);
     }

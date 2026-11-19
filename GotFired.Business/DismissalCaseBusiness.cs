@@ -6,16 +6,19 @@ using GotFired.Model.Entities.DismissalCase;
 using GotFired.Model.Entities.Enums;
 using GotFired.Model.ViewModels;
 using System.Linq;
+using Microsoft.Extensions.Options;
 
 namespace GotFired.Business
 {
     public class DismissalCaseBusiness : IDismissalCaseBusiness
     {
         readonly UnitOfWork _unitOfWork;
+        readonly ApplicantLinkOptions _linkOptions;
 
-        public DismissalCaseBusiness(UnitOfWork unitOfWork)
+        public DismissalCaseBusiness(UnitOfWork unitOfWork, IOptions<ApplicantLinkOptions> linkOptions)
         {
             _unitOfWork = unitOfWork;
+            _linkOptions = linkOptions.Value;
         }
 
         public IEnumerable<DismissalCaseListModel> GetDismissalCaseListModel(int page, int pageSize)
@@ -30,43 +33,82 @@ namespace GotFired.Business
         {
             return _unitOfWork.dismissalCaseRepository.GetDismissalCaseById(id);
         }
-        public DismissalCaseViewModel GetDismissalCaseByGuid(string guid)
+        /// <summary>
+        /// The applicant's own view of their case, for a valid unexpired link token; null otherwise.
+        /// The token is echoed back in <c>Guid</c> because userView.html posts that field with replies.
+        /// </summary>
+        public DismissalCaseViewModel GetApplicantView(string token)
         {
-            return _unitOfWork.dismissalCaseRepository.GetDismissalCaseByGuid(guid);
+            int? caseId = FindCaseByToken(token);
+            if (caseId == null) return null;
 
+            var view = _unitOfWork.dismissalCaseRepository.GetApplicantView(caseId.Value);
+            view.Guid = token;
+            return view;
         }
-
 
         public string GetInitializer()
         {
             return Guid.NewGuid().ToString();
         }
 
-        public void UpdateDismissalCaseByApplicantAnswer(Comment comment, string guid)
+        /// <summary>
+        /// Stores the applicant's reply on the case their link token belongs to and marks it pending.
+        /// The case and the author name come from the token, never from the request. Null for an invalid token.
+        /// </summary>
+        public Comment AddApplicantReply(string token, string text)
         {
-            var dismissalCase = _unitOfWork.dismissalCaseRepository.GetByID(comment.DismissalCaseID);
+            int? caseId = FindCaseByToken(token);
+            if (caseId == null) return null;
+
+            var dismissalCase = _unitOfWork.dismissalCaseRepository.GetByID(caseId.Value);
             dismissalCase.AppealState = AppealState.Pending;
-
             _unitOfWork.dismissalCaseRepository.Update(dismissalCase);
-            _unitOfWork.CommentRepository.Add(comment);
-            _unitOfWork.Save();
-        }
-        public void UpdateDismissalCaseByUserAnswer(CommentViewModel commentViewModel)
-        {
-            
-            var dismissalCase = _unitOfWork.dismissalCaseRepository.GetByID(commentViewModel.DismissalCaseId);
-            dismissalCase.AppealState = AppealState.Answered;
 
-            _unitOfWork.dismissalCaseRepository.Update(dismissalCase);
-            Comment comment = new Comment
+            var comment = new Comment
             {
-                DismissalCaseID = commentViewModel.DismissalCaseId,
-                Text = commentViewModel.Text,
-                UserName = commentViewModel.UserName,
+                DismissalCaseID = dismissalCase.ID,
+                Text = text,
+                UserName = _unitOfWork.ApplicantRepository.GetByID(dismissalCase.ApplicantId)?.FullName,
             };
             _unitOfWork.CommentRepository.Add(comment);
             _unitOfWork.Save();
+            return comment;
         }
+
+        /// <summary>
+        /// Stores a staff answer, marks the case answered and issues a new applicant link token (replacing the
+        /// previous one). Returns where to email the link; the caller sends it after this has been saved.
+        /// </summary>
+        public ApplicantNotification AnswerCase(int caseId, string text, string staffUserName)
+        {
+            var dismissalCase = _unitOfWork.dismissalCaseRepository.GetByID(caseId)
+                                ?? throw new InvalidOperationException($"Dismissal case {caseId} not found.");
+            dismissalCase.AppealState = AppealState.Answered;
+
+            var (token, hash) = ApplicantAccessToken.Create();
+            dismissalCase.AccessTokenHash = hash;
+            dismissalCase.AccessTokenExpiresAt = DateTime.UtcNow.Add(_linkOptions.Lifetime);
+            _unitOfWork.dismissalCaseRepository.Update(dismissalCase);
+
+            _unitOfWork.CommentRepository.Add(new Comment
+            {
+                DismissalCaseID = caseId,
+                Text = text,
+                UserName = staffUserName,
+            });
+            _unitOfWork.Save();
+
+            var email = _unitOfWork.ApplicantRepository.GetByID(dismissalCase.ApplicantId)?.Email;
+            return new ApplicantNotification(email, token);
+        }
+
+        private int? FindCaseByToken(string token)
+        {
+            byte[] hash = ApplicantAccessToken.TryHash(token);
+            return hash == null ? null : _unitOfWork.dismissalCaseRepository.FindIdByAccessToken(hash, DateTime.UtcNow);
+        }
+
         public void UpdateDismissalCaseByNotes(NoteModel noteModel)
         {
             var dismissalCase = _unitOfWork.dismissalCaseRepository.GetByID(noteModel.DismissalCaseId);
@@ -241,4 +283,7 @@ namespace GotFired.Business
             _unitOfWork.Save();
         }
     }
+
+    /// <summary>Applicant email address and the new link token to send after a staff answer.</summary>
+    public record ApplicantNotification(string Email, string Token);
 }

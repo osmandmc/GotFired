@@ -25,8 +25,13 @@ The production database moves from the old SQL Server 2008 R2 (Plesk) to a new S
    sqlcmd -S <server> -d gotfired -U <admin> -i db/upgrade-legacy-database.sql -b
    ```
    It ends by listing user names with non-ASCII characters; the 2025-08 backup had none.
-6. **Create an app login** with only `db_datareader` and `db_datawriter`, not `sa`. Future EF Core migrations run separately with a DDL-capable login.
-7. **Deploy the container** with these environment variables:
+6. **Apply the EF Core migrations** that came after the baseline (idempotent; `-I` is needed for the filtered index):
+   ```sh
+   sqlcmd -S <server> -d gotfired -U <admin> -I -i db/migrations.sql -b
+   ```
+   Regenerate after adding a migration: `dotnet ef migrations script 20261118213655_Baseline --idempotent --project GotFired.DAL --startup-project GotFired.DAL -o db/migrations.sql`, then remove the UTF-8 BOM (sqlcmd rejects it on stdin).
+7. **Create an app login** with only `db_datareader` and `db_datawriter`, not `sa`. Future EF Core migrations run separately with a DDL-capable login.
+8. **Deploy the container** with these environment variables:
 
    | Variable | Value |
    |---|---|
@@ -35,9 +40,10 @@ The production database moves from the old SQL Server 2008 R2 (Plesk) to a new S
    | `Smtp__Password` | the **rotated** SMTP password |
    | `Smtp__ExceptionRecipient` | who receives error emails |
    | `Smtp__PublicBaseUrl` | public site URL, used in the applicant email link |
-   | `Identity__PasswordHashCompatibilityV2` | `true` while a rollback must stay possible (see below) |
+   | `ApplicantLinks__Lifetime` | how long an emailed applicant link works (default `90.00:00:00`) |
+| `Identity__PasswordHashCompatibilityV2` | `true` while a rollback must stay possible (see below) |
 
-8. **Check it:** log in with a real account and open a case. Run `tests/api_smoke_test.py` only against a staging copy, never against production, because it writes test data.
+9. **Check it:** log in with a real account and open a case. Run `tests/api_smoke_test.py` only against a staging copy, never against production, because it writes test data.
 
 ## Rollback
 
@@ -57,6 +63,7 @@ docker compose exec sql /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P '
   WITH MOVE 'gotfired' TO '/var/opt/mssql/data/gotfired.mdf', MOVE 'gotfired_log' TO '/var/opt/mssql/data/gotfired_log.ldf', REPLACE;
   ALTER DATABASE gotfired SET COMPATIBILITY_LEVEL = 160;"
 docker compose exec -T sql /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P 'Dev_Passw0rd!' -d gotfired -b < db/upgrade-legacy-database.sql
+docker compose exec -T sql /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P 'Dev_Passw0rd!' -d gotfired -I -b < db/migrations.sql
 docker compose exec sql rm /var/opt/mssql/gotfired.bak
 docker compose up -d --build                        # API + Mailpit; log in as dev-admin / admin123
 ```
@@ -64,5 +71,6 @@ docker compose up -d --build                        # API + Mailpit; log in as d
 ## Files
 
 - `upgrade-legacy-database.sql`: the one-time upgrade above.
+- `migrations.sql`: idempotent script of the EF Core migrations after `Baseline`.
 - `tests/legacy-ef6-schema.sql`: a test fixture that reproduces the old schema (Turkish collation, compatibility level 100, the missing SGK foreign key, duplicate Guids).
 - `tests/schema-snapshot.sql`: one line per column, key and index. Diff the output from two databases to check parity; the only expected difference is `AspNetUsers.LockoutEndDateUtc`, which is kept for rollback.

@@ -14,9 +14,10 @@ namespace GotFired.Business
             _options = options.Value;
         }
 
-        public void SendEmail(string emailAdress, string guid)
+        /// <param name="accessToken">The applicant's secret link token (userView.html reads it from ?guid=).</param>
+        public void SendEmail(string emailAdress, string accessToken)
         {
-            string link = $"{_options.PublicBaseUrl?.TrimEnd('/')}/userview.html?guid={Uri.EscapeDataString(guid ?? string.Empty)}";
+            string link = $"{_options.PublicBaseUrl?.TrimEnd('/')}/userview.html?guid={Uri.EscapeDataString(accessToken ?? string.Empty)}";
             Send(emailAdress,
                 "İşten Atıldım Başvurunuz Hk.",
                 "Merhaba,  <p>istenatildim.org sitesine yapmış olduğunuz başvurunun cevabını görmek ve isterseniz görüşmeyi devam ettirmek için şu <a href = '" + link + "'>linke</a> tıklayın.</p>");
