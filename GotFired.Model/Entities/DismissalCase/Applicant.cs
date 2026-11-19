@@ -1,4 +1,4 @@
-﻿using GotFired.Model.Entities.Enums;
+using GotFired.Model.Entities.Enums;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -20,29 +20,5 @@ namespace GotFired.Model.Entities.DismissalCase
         public string FullName { get; set; }
         public int? PositionId { get; set; }
 
-        public override int Creator
-        {
-            get
-            {
-                return base.Creator;
-            }
-
-            set
-            {
-                base.Creator = this.ID;
-            }
-        }
-        public override int Editor
-        {
-            get
-            {
-                return base.Editor;
-            }
-
-            set
-            {
-                base.Editor = this.ID;
-            }
-        }
     }
 }

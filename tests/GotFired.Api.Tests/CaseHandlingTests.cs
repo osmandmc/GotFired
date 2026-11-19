@@ -33,6 +33,26 @@ public class CaseHandlingTests(TestEnvironment env)
     }
 
     [Fact]
+    public async Task Case_view_shows_the_SGK_reason_the_applicant_chose()
+    {
+        var anonymous = env.CreateClient();
+        var lookups = await anonymous.GetAsync("/api/v1/dismissalcase/apply");
+        var sgk = lookups["sgkTerminationReasons"]![0]!;
+        string name = TestData.Unique("SGK");
+        var form = TestData.ApplicationForm((string)lookups["guid"], name, "sgk@example.com", (int)lookups["cities"]![0]!["ID"])
+            .Where(f => f.Key != "SGKTerminationReasonID")
+            .Append(new("SGKTerminationReasonID", ((int)sgk["ID"]).ToString()))   // and no declared reason
+            .ToList();
+        await anonymous.PostFormAsync("/api/v1/dismissalcase/apply", form);
+        var admin = await AdminAsync();
+
+        var view = await admin.GetAsync($"/api/v1/dismissalcase/view/{await TestData.FindCaseIdAsync(admin, name)}");
+
+        Assert.Equal((int)sgk["ID"], (int)view["SGKTerminationReasonId"]);
+        Assert.Equal($"{sgk["Code"]} - {sgk["Name"]}", (string)view["SGKTerminationReasonName"]);
+    }
+
+    [Fact]
     public async Task Missing_case_returns_the_old_error_message()
     {
         var response = await (await AdminAsync()).GetAsync("/api/v1/dismissalcase/view/999999");

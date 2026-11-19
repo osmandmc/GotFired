@@ -20,28 +20,21 @@ namespace GotFired.Api.Controllers
         [HttpGet("apply")]
         public IActionResult Apply()
         {
-            try
+            var lookups = cases.GetApplicationLookups();
+            return Ok(new
             {
-                var lookups = cases.GetApplicationLookups();
-                return Ok(new
-                {
-                    guid = cases.NewApplicationGuid(),
-                    cities = lookups.Cities,
-                    declaredTerminationReasons = lookups.DeclaredTerminationReasons,
-                    supportedBys = lookups.SupportedBys,
-                    ageIntervals = EnumHelper.GetEnumLookups<AgeInterval>(),
-                    educationStates = EnumHelper.GetEnumLookups<EducationState>(),
-                    dismissalStates = EnumHelper.GetEnumLookups<DismissalState>(),
-                    genders = EnumHelper.GetEnumLookups<Gender>(),
-                    employmentDurations = EnumHelper.GetEnumLookups<EmploymentDurationSince>(),
-                    employeeCounts = EnumHelper.GetEnumLookups<EmployeeCount>(),
-                    sgkTerminationReasons = lookups.SgkTerminationReasons
-                });
-            }
-            catch (Exception)
-            {
-                return new JsonResult("Hatayı bulamadım");
-            }
+                guid = cases.NewApplicationGuid(),
+                cities = lookups.Cities,
+                declaredTerminationReasons = lookups.DeclaredTerminationReasons,
+                supportedBys = lookups.SupportedBys,
+                ageIntervals = EnumHelper.GetEnumLookups<AgeInterval>(),
+                educationStates = EnumHelper.GetEnumLookups<EducationState>(),
+                dismissalStates = EnumHelper.GetEnumLookups<DismissalState>(),
+                genders = EnumHelper.GetEnumLookups<Gender>(),
+                employmentDurations = EnumHelper.GetEnumLookups<EmploymentDurationSince>(),
+                employeeCounts = EnumHelper.GetEnumLookups<EmployeeCount>(),
+                sgkTerminationReasons = lookups.SgkTerminationReasons
+            });
         }
 
         // apply.html posts a jQuery-serialized form.

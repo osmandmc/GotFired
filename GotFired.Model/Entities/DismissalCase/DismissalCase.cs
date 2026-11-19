@@ -37,30 +37,6 @@ namespace GotFired.Model.Entities.DismissalCase
         /// <summary>SHA-256 of the applicant's secret link token (the token itself is never stored).</summary>
         public byte[] AccessTokenHash { get; set; }
         public DateTime? AccessTokenExpiresAt { get; set; }
-        public override int Creator
-        {
-            get
-            {
-                return base.Creator;
-            }
-
-            set
-            {
-                base.Creator = this.ApplicantId;
-            }
-        }
-        public override int Editor
-        {
-            get
-            {
-                return base.Editor;
-            }
-
-            set
-            {
-                base.Editor = this.ApplicantId;
-            }
-        }
 
         //navigation properties
         public virtual Applicant Applicant { get; set; }

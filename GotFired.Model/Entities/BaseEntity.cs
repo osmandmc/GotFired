@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
@@ -33,8 +33,8 @@ namespace GotFired.Model.Entities
 
         public int ID { get; set; }
 
-        public virtual int Editor { get; set; }
-        public virtual int Creator { get; set; }
+        public int Editor { get; set; }
+        public int Creator { get; set; }
         [Required]
         public DateTime CreatedDate { get; set; }
         [Required]
