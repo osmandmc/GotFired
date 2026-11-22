@@ -2,8 +2,10 @@ using System.Text;
 using GotFired.Api.Auth;
 using GotFired.Api.Infrastructure;
 using GotFired.Business;
+using GotFired.Business.Email;
+using GotFired.Business.Services;
 using GotFired.DAL;
-using GotFired.Model.Identity;
+using GotFired.DAL.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
@@ -55,13 +57,13 @@ builder.Services.Configure<PasswordHasherOptions>(o =>
 });
 
 // --- Application services ---------------------------------------------------------------------
-builder.Services.AddScoped<UnitOfWork>();
-builder.Services.AddScoped<AuthRepository>();
-builder.Services.AddScoped<AuthBusiness>();
-builder.Services.AddScoped<DismissalCaseBusiness>();
-builder.Services.AddScoped<ParameterBusiness>();
-builder.Services.AddSingleton<SmtpManager>(); // stateless; also used by the singleton exception handler
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<ICaseService, CaseService>();
+builder.Services.AddScoped<IAnswerTemplateService, AnswerTemplateService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>(); // stateless; also used by the singleton exception handler
 builder.Services.Configure<SmtpOptions>(config.GetSection(SmtpOptions.SectionName));
+builder.Services.Configure<ApplicantLinkOptions>(config.GetSection(ApplicantLinkOptions.SectionName));
 
 // --- Auth (replaces the OWIN OAuth authorization server) -------------------------------------
 builder.Services.Configure<JwtOptions>(config.GetSection(JwtOptions.SectionName));
@@ -103,6 +105,8 @@ builder.Services.Configure<ApiBehaviorOptions>(o =>
     o.SuppressModelStateInvalidFilter = true;
 });
 
+// Order matters: rule violations are answered with 412 before anything is treated as an error.
+builder.Services.AddExceptionHandler<BusinessRuleExceptionHandler>();
 builder.Services.AddExceptionHandler<EmailExceptionHandler>();
 builder.Services.AddProblemDetails();
 
@@ -117,6 +121,14 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
 var app = builder.Build();
 
 app.UseForwardedHeaders();
+app.Use((context, next) =>
+{
+    // Applicant links carry a secret token in the URL: never leak it to other sites via the Referer header
+    // (userView.html loads third-party scripts).
+    context.Response.Headers["Referrer-Policy"] = "no-referrer";
+    context.Response.Headers.XContentTypeOptions = "nosniff";
+    return next(context);
+});
 app.UseExceptionHandler();
 
 app.UseDefaultFiles();

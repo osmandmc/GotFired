@@ -14,7 +14,7 @@ namespace GotFired.DAL
             string connection = Environment.GetEnvironmentVariable("GOTFIRED_CONNECTION")
                                 ?? "Server=localhost,1433;Database=gotfired;User ID=sa;Password=Dev_Passw0rd!;TrustServerCertificate=True";
             var options = new DbContextOptionsBuilder<GotFiredDbContext>().UseSqlServer(connection).Options;
-            return new GotFiredDbContext(options);
+            return new GotFiredDbContext(options, TimeProvider.System);
         }
     }
 }

@@ -15,9 +15,11 @@ dotnet tool restore                # dotnet-ef from dotnet-tools.json
 dotnet ef migrations add <Name> --project GotFired.DAL --startup-project GotFired.DAL   # DB from $GOTFIRED_CONNECTION
 dotnet ef migrations has-pending-model-changes --project GotFired.DAL --startup-project GotFired.DAL
 python3 tests/api_smoke_test.py [base_url] [admin] [pw] [user] [pw]   # end-to-end contract test, writes data
+dotnet test --project tests/GotFired.Api.Tests/GotFired.Api.Tests.csproj           # integration tests; needs Docker (Testcontainers)
+dotnet test --project tests/GotFired.Api.Tests/GotFired.Api.Tests.csproj --filter-method "*Tampered*"   # one test
 ```
 
-There are no unit tests. `tests/api_smoke_test.py` is the regression net for the HTTP contract. Its defaults target a DB built from `db/tests/legacy-ef6-schema.sql` + `db/upgrade-legacy-database.sql` (users `legacy-admin`/`legacy-user`, password `legacy-pass`). Set `MAILPIT_URL` to also check outgoing mail.
+`tests/GotFired.Api.Tests` is the regression net. It holds behaviour tests at the HTTP boundary, run in-process against SQL Server 2022 and Mailpit in Testcontainers. Its database is built like production on cutover day: EF6 fixture with Turkish collation → level 160 → upgrade script → `migrations.sql`. A schema-parity test compares it with a migrations-only database. Tests share the database and run in parallel, so each test creates its own uniquely named data. When running inside a container, set `TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal` and mount the Docker socket. `tests/api_smoke_test.py` is the same check as a script for a deployed instance. Its defaults target a DB built from `db/tests/legacy-ef6-schema.sql` + `db/upgrade-legacy-database.sql` (users `legacy-admin`/`legacy-user`, password `legacy-pass`). Set `MAILPIT_URL` to also check outgoing mail.
 
 Configuration lives in `appsettings*.json`, with production values in env vars: `ConnectionStrings__GotFired`, `Jwt__Key` (≥32 bytes), `Smtp__*`. `Seed:Enabled` runs migrations plus `DevDataSeeder` on startup (Development only).
 
@@ -25,18 +27,18 @@ Configuration lives in `appsettings*.json`, with production values in env vars: 
 
 Project references flow Api → Business → DAL → Model. Versions are central in `Directory.Packages.props`, and the target framework is set in `Directory.Build.props`. Nullable is off because the code predates it.
 
-- **Model**: EF entities (`Entities/DismissalCase/*`, derived from `BaseEntity`), enums stored as `tinyint` (`Enums/Enums.cs`, `[Display]` names are served to the UI via `EnumHelper.GetEnumLookups<T>()`), view models, repository interfaces, `Identity/ApplicationUser`.
-- **DAL**: `GotFiredDbContext : IdentityDbContext<ApplicationUser>`. `UnitOfWork` (scoped) lazily creates repositories over the shared context. `Save()` stamps audit fields and a **string `RowVersion`** that `BaseRepository.Update` uses as a hand-rolled optimistic-concurrency check. `AuthRepository` wraps `UserManager`/`RoleManager` (async).
-- **Business**: `*Business` classes plus `SmtpManager` (MailKit, `SmtpOptions`), all injected through DI. The case/parameter code is synchronous; the auth code is async.
-- **Api**: `Program.cs` holds all wiring. Controllers use attribute routes under `api/v1/<controller>/...` and `[Authorize(Roles=...)]`. `/token` (`Auth/TokenEndpoint.cs`) replaces the old OWIN OAuth password grant and issues JWTs that carry `role` claims. `EmailExceptionHandler` emails unhandled exceptions.
+- **Model**: EF entities (`Entities/*`, derived from `BaseEntity`), enums stored as `tinyint` (`Enums/Enums.cs`, `[Display]` names are served to the UI via `EnumHelper.GetEnumLookups<T>()`), and the API shapes (`ViewModels/*`, `Dtos.cs`). No framework dependencies. Entities never cross the API boundary; DTO property names match the JSON the front end reads.
+- **DAL**: `GotFiredDbContext : IdentityDbContext<ApplicationUser>` (`Identity/ApplicationUser.cs`), its migrations, and `DevDataSeeder`. `SaveChanges` stamps the audit columns, including a new string `RowVersion`. `RowVersion` is an EF concurrency token, so a stale update fails atomically (`DbUpdateConcurrencyException`). There are no repository or unit-of-work wrappers: the `DbContext` is the unit of work.
+- **Business**: services behind interfaces (`ICaseService`, `IAnswerTemplateService`, `IUserService`) that work on the `DbContext` with projections to DTOs. `IEmailSender` is implemented by `SmtpEmailSender` (MailKit). Time comes from `TimeProvider`. Rule violations throw `BusinessRuleException`.
+- **Api**: `Program.cs` holds all wiring. Controllers are thin: they bind the request, call a service and shape the response. Routes are attribute routes under `api/v1/<controller>/...` with `[Authorize(Roles=...)]`. `/token` (`Auth/TokenEndpoint.cs`) issues JWTs with `role` claims. Two exception handlers: `BusinessRuleExceptionHandler` turns a `BusinessRuleException` into 412 `{StatusMessage, StatusText}`, which the SPA shows as a warning toast; `EmailExceptionHandler` emails anything else and returns 500.
 
 ### Database: mapped onto a pre-existing EF6 schema
 
 The EF Core model deliberately reproduces the schema created by EF6 + ASP.NET Identity 2. Keep it that way, because production data lives in it:
-- pluralized table names (`DismissalCases`, `SupportedBies`, …)
+- pluralized table names (`DismissalCases`, `SupportedBies`, …), including the misspelled `DismissalCaseSupprtedBies` (the C# class is `DismissalCaseSupportedBy`)
 - `datetime` (not `datetime2`)
 - `nvarchar(128)` Identity keys
-- EF6-style constraint names (`PK_dbo.X`, `FK_dbo.X_dbo.Y_Col`, `IX_Col`), set in `DBContext.cs` → `ApplyEf6ConstraintNames`.
+- EF6-style constraint names (`PK_dbo.X`, `FK_dbo.X_dbo.Y_Col`, `IX_Col`), set in `GotFiredDbContext.cs` → `ApplyEf6ConstraintNames`.
 
 Existing databases are upgraded once with `db/upgrade-legacy-database.sql`. It adds the Core Identity columns and tables and marks the `Baseline` migration as applied. Fresh databases get the same schema from the `Baseline` migration. To check parity, diff the output of `db/tests/schema-snapshot.sql` between the two. The only expected difference is `AspNetUsers.LockoutEndDateUtc`, which is kept for rollback to the old app.
 
@@ -46,6 +48,15 @@ Production is moving from SQL Server 2008 R2 to a new SQL Server 2022; the cutov
 - `DismissalCases.Guid` is not unique (74 old double-submitted cases share 31 Guids). `userview/{guid}` shows the newest case with the merged conversation, and `AddDismissalCase` ignores a repeated Guid.
 
 Identity v2 password hashes still verify and are rehashed to v3 at login. While rollback to the .NET Framework app must stay possible, set `Identity:PasswordHashCompatibilityV2=true`.
+
+### Applicant links
+
+Applicants reach only `userView.html?guid=<token>`, from the email sent when staff answer:
+- The token is 256 random bits (`ApplicantAccessToken`). The database stores only its SHA-256 hash in `DismissalCases.AccessTokenHash`, with `AccessTokenExpiresAt` (`ApplicantLinks:Lifetime`, default 90 days).
+- Every staff answer issues a new token, which invalidates the previous one.
+- `userview` and `useranswer` resolve the case from the token. They ignore the case ID and name sent from the browser and never return staff `Notes`.
+- The case `Guid` is only a double-submit key. Old Guid links stopped working with this change.
+- The parameter is still called `guid` so `userView.html` works unchanged.
 
 ### Front end: AngularJS 1.x in `GotFired.Api/wwwroot`, no build step
 
