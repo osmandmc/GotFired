@@ -7,17 +7,19 @@ public static class TestData
 {
     public static string Unique(string prefix) => $"{prefix}-{Guid.NewGuid():N}"[..(prefix.Length + 9)];
 
-    /// <summary>Submits the public application form like apply.html (jQuery form post) and returns its case Guid.</summary>
+    public static Dictionary<string, string> ApplicantToken(string token) => new() { ["X-Applicant-Token"] = token };
+
+    /// <summary>Submits the public application form like apply.html (jQuery form post) and returns its submission Guid.</summary>
     public static async Task<(string Guid, string ApplicantName, string Email)> SubmitApplicationAsync(ApiClient anonymous)
     {
-        var lookups = await anonymous.GetAsync("/api/v1/dismissalcase/apply");
-        Assert.Equal(HttpStatusCode.OK, lookups.Status);
-        string guid = (string)lookups["guid"];
+        var form = await anonymous.GetAsync("/api/v1/application-form");
+        Assert.Equal(HttpStatusCode.OK, form.Status);
+        string guid = (string)form["guid"];
         string name = Unique("Başvuru");
         string email = $"{Unique("applicant")}@example.com";
 
-        var response = await anonymous.PostFormAsync("/api/v1/dismissalcase/apply", ApplicationForm(guid, name, email, (int)lookups["cities"]![0]!["ID"]));
-        Assert.Equal(HttpStatusCode.OK, response.Status);
+        var response = await anonymous.PostFormAsync("/api/v1/applications", ApplicationForm(guid, name, email, (int)form["cities"]![0]!["ID"]));
+        Assert.Equal(HttpStatusCode.Accepted, response.Status);
         return (guid, name, email);
     }
 
@@ -30,12 +32,12 @@ public static class TestData
         new("DetailedExperience", "deneyim"), new("AppealState", "1"), new("CompanySectorName", "Yazılım"), new("SGKTerminationReasonID", ""),
     ];
 
-    /// <summary>Finds a case in the admin lists by applicant name (searches all pages of index).</summary>
+    /// <summary>Finds a case in the staff list by applicant name (searches all pages).</summary>
     public static async Task<int> FindCaseIdAsync(ApiClient admin, string applicantName)
     {
         for (int page = 1; ; page++)
         {
-            var list = await admin.GetAsync($"/api/v1/dismissalcase/index/{page}");
+            var list = await admin.GetAsync($"/api/v1/cases?page={page}");
             Assert.Equal(HttpStatusCode.OK, list.Status);
             var data = list["data"]!;
             if (!data.Any()) throw new InvalidOperationException($"Case for {applicantName} not found.");
@@ -52,15 +54,7 @@ public static class TestData
         return (await FindCaseIdAsync(admin, name), guid, name, email);
     }
 
-    /// <summary>Staff answers the case the way the SPA does (it still sends EmailAddress/Guid/UserName).</summary>
-    public static Task<ApiResponse> AnswerAsync(ApiClient admin, int caseId, string text, string emailAddress = "ignored@example.com") =>
-        admin.PostJsonAsync("/api/v1/dismissalcase/answer", new
-        {
-            DismissalCaseId = caseId.ToString(),
-            EmailAddress = emailAddress,
-            Guid = "sent-by-spa",
-            UserName = "sent-by-spa",
-            CreatedDate = "2026-11-18T10:00:00.000Z",
-            Text = text,
-        });
+    /// <summary>A staff answer, as the case page sends it.</summary>
+    public static Task<ApiResponse> AnswerAsync(ApiClient admin, int caseId, string text) =>
+        admin.PostJsonAsync($"/api/v1/cases/{caseId}/comments", new { Text = text });
 }

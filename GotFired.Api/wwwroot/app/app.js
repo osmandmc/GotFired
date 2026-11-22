@@ -13,14 +13,25 @@
             responseError: function (response) {
                
                 console.log(response);
+                // Errors are RFC 9457 Problem Details: { title, status, detail, errors }.
+                var problem = response.data || {};
                 switch (response.status) {
                     case 401:
                         window.location.href = window.location.origin + "/login.html"; break; //return $q.reject(response);
+                    case 403:
+                        $injector.get('toastr').warning('Bu işlem için yetkiniz yok.', 'Uyarı'); break;
                     case 500:
                         $injector.get('toastr').error('Beklenmedik bir hata oluştu.');
                         $injector.get('$location').path('/dashboard'); break;
-                    case 412:
-                        $injector.get('toastr').warning(response.data.StatusMessage, response.data.StatusText); break;
+                    case 400: // validation: list the field messages
+                        var messages = [];
+                        angular.forEach(problem.errors || {}, function (list) { messages = messages.concat(list); });
+                        $injector.get('toastr').warning(messages.join(' ') || problem.title, 'Uyarı'); break;
+                    case 404: // not found
+                    case 412: // stale edit (If-Match)
+                    case 422: // business rule
+                    case 428: // If-Match missing
+                        $injector.get('toastr').warning(problem.detail || problem.title, 'Uyarı'); break;
                     default:
                         $injector.get('toastr').error('Beklenmedik bir hata oluştu.', "Default Error");
                         $injector.get('$location').path('/dashboard'); break;

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
@@ -84,7 +84,7 @@
                 </div>
                 <div class="portlet-body form">
                     <!-- BEGIN FORM-->
-                    <form id="applyForm" method="post" action="api/v1/dismissalcase/apply" class="horizontal-form">
+                    <form id="applyForm" method="post" action="/api/v1/applications" class="horizontal-form">
                         <div class="form-body">
                             <!--<h3 class="form-section">Kişisel Bilgiler</h3>-->
 
@@ -308,7 +308,7 @@
                     }
                 };
 
-                xmlhttp.open("GET", "/api/v1/dismissalcase/apply", true);
+                xmlhttp.open("GET", "/api/v1/application-form", true);
                 xmlhttp.send();
 
 
@@ -397,7 +397,7 @@
             console.log($('#EmploymentTerminationDate').val());
             var jsonObj = $('#applyForm').serialize();
             $.ajax({
-                url: 'api/v1/dismissalcase/apply',
+                url: '/api/v1/applications',
                 method: 'POST',
                 data: jsonObj,                 // Serialize the form data
                 success: function (data) {                        // If 200 OK
@@ -406,13 +406,15 @@
                     window.location.href = 'https://plazaeylem.org';
                 },
                 error: function (xhr, text, error) {
-                    var response = JSON.parse(xhr.responseText);
-                    if (response.ModelState !== null) {
+                    // Validation errors are Problem Details: { title, errors: { field: [messages] } }.
+                    var response = {};
+                    try { response = JSON.parse(xhr.responseText); } catch (e) { }
+                    if (response.errors) {
                         var error = [];
-                        $.each(response.ModelState, function (key, value) {
-                            error.push(value);
+                        $.each(response.errors, function (key, value) {
+                            error.push(value.join(' '));
                         });
-                        alert(error);
+                        alert(error.join('\n'));
                     }
                     else {
                         alert('Bad Request');

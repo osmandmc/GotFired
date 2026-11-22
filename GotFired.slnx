@@ -1,7 +1,7 @@
 <Solution>
   <Project Path="GotFired.Api/GotFired.Api.csproj" />
-  <Project Path="GotFired.Business/GotFired.Business.csproj" />
   <Project Path="GotFired.DAL/GotFired.DAL.csproj" />
   <Project Path="GotFired.Model/GotFired.Model.csproj" />
   <Project Path="tests/GotFired.Api.Tests/GotFired.Api.Tests.csproj" />
+  <Project Path="tests/GotFired.Model.Tests/GotFired.Model.Tests.csproj" />
 </Solution>

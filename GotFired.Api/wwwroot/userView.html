@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
@@ -207,16 +207,18 @@
             //});
             $("#myForm").submit(function (e) {
 
-                var url = "/api/v1/dismissalcase/useranswer/"; // the script where you handle the form input.
                 $("#submitBtn").prop('disabled', true);
                 var markupStr = $('#answerTextEditor').summernote('code');
-                console.log(markupStr);
-                $("#answerText").val(markupStr);
-                console.log($("#answerText").val());
                 $.ajax({
                     type: "POST",
-                    url: url,
-                    data: $("#myForm").serialize(), // serializes the form's elements.
+                    url: "/api/v1/applicant/case/comments",
+                    headers: { "X-Applicant-Token": applicantToken() },
+                    contentType: "application/json",
+                    data: JSON.stringify({ Text: markupStr }),
+                    error: function () {
+                        $("#submitBtn").prop('disabled', false);
+                        alert('Cevabınız gönderilemedi. Lütfen size gönderilen son maildeki linke tıkladığınızdan emin olun.');
+                    },
                     success: function (data) {
                         console.log(data);
                         $("#submitBtn").prop('disabled', false);
@@ -246,9 +248,6 @@
                             //document.getElementById("myDiv").innerHTML = xmlhttp.responseText;
                             var data = JSON.parse(xmlhttp.responseText);
                             console.log(data);
-                            document.getElementById('DismissalCaseId').value = data.Id;
-                            document.getElementById('Guid').value = data.Guid;
-                            document.getElementById('UserName').value = data.FullName;
 
                             insertText('FullName', data.FullName);
                             insertText('AgeInterval', data.AgeIntervalName);
@@ -272,19 +271,22 @@
                             insertComments(data.Comments);
 
                         }
-                        else if (xmlhttp.status == 400) {
-                            alert('There was an error 400');
-                        }
                         else {
                             alert('Cevabınızı görüntülerken bir hata oluştu. Lütfen size gönderilen son maildeki linke tıkladığınızdan emin olun. Sorun devam ederse bilgi@plazaeylem.org adresinden bize ulaşabilirsiniz.');
                         }
                     }
                 };
-                var guid = location.search.substring(1).split("=")[1];
-                xmlhttp.open("GET", "api/v1/dismissalcase/userview/" + guid, true);
+                xmlhttp.open("GET", "/api/v1/applicant/case", true);
+                xmlhttp.setRequestHeader("X-Applicant-Token", applicantToken());
                 xmlhttp.send();
             }
         };
+        // The emailed link is userView.html#token=...: the fragment is never sent to the server, so the secret
+        // stays out of server logs and Referer headers. It is sent to the API in a header instead.
+        function applicantToken() {
+            var match = /(?:^#|&)token=([^&]+)/.exec(location.hash);
+            return match ? decodeURIComponent(match[1]) : "";
+        }
         function insertText(tag, text) {
             if (true) {
 

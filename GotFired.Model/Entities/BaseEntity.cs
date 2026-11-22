@@ -6,21 +6,21 @@ namespace GotFired.Model.Entities
     /// <summary>
     /// Columns every application table has. Creator/Editor are legacy integer columns that are not populated;
     /// RowVersion is a 16-character string regenerated on every save and used as a concurrency token.
-    /// The audit fields are stamped by GotFiredDbContext.SaveChanges.
+    /// All of these are set by GotFiredDbContext.SaveChanges (through EF Core, hence the private setters).
     /// </summary>
     public abstract class BaseEntity
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int ID { get; set; }
-        public int Editor { get; set; }
-        public int Creator { get; set; }
+        public int ID { get; private set; }
+        public int Editor { get; private set; }
+        public int Creator { get; private set; }
         [Required]
-        public DateTime CreatedDate { get; set; }
+        public DateTime CreatedDate { get; private set; }
         [Required]
-        public DateTime EditedDate { get; set; }
-        public bool IsDeleted { get; set; }
-        public bool IsActive { get; set; }
+        public DateTime EditedDate { get; private set; }
+        public bool IsDeleted { get; private set; }
+        public bool IsActive { get; private set; }
         [Required, MaxLength(16)]
-        public string RowVersion { get; set; }
+        public string RowVersion { get; private set; }
     }
 }
