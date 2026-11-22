@@ -43,7 +43,7 @@ The production database moves from the old SQL Server 2008 R2 (Plesk) to a new S
    | `ApplicantLinks__Lifetime` | how long an emailed applicant link works (default `90.00:00:00`) |
 | `Identity__PasswordHashCompatibilityV2` | `true` while a rollback must stay possible (see below) |
 
-9. **Check it:** log in with a real account and open a case. Run `tests/api_smoke_test.py` only against a staging copy, never against production, because it writes test data.
+9. **Check it:** log in with a real account and open a case. Run `tests/e2e/ui_test.py` only against a staging copy, never against production, because it writes test data.
 
 ## Rollback
 

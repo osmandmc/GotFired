@@ -3,7 +3,7 @@ using MailKit.Security;
 using Microsoft.Extensions.Options;
 using MimeKit;
 
-namespace GotFired.Business.Email
+namespace GotFired.Api.Infrastructure.Email
 {
     public class SmtpEmailSender(IOptions<SmtpOptions> options) : IEmailSender
     {
@@ -11,8 +11,9 @@ namespace GotFired.Business.Email
 
         public void SendApplicantLink(string emailAddress, string accessToken)
         {
-            // userView.html reads the token from ?guid=
-            string link = $"{_options.PublicBaseUrl?.TrimEnd('/')}/userview.html?guid={Uri.EscapeDataString(accessToken ?? string.Empty)}";
+            // The token goes in the URL fragment: browsers never send fragments to the server, so it stays out of
+            // access logs and Referer headers. The file name is case-sensitive on Linux.
+            string link = $"{_options.PublicBaseUrl?.TrimEnd('/')}/userView.html#token={Uri.EscapeDataString(accessToken ?? string.Empty)}";
             Send(emailAddress,
                 "İşten Atıldım Başvurunuz Hk.",
                 "Merhaba,  <p>istenatildim.org sitesine yapmış olduğunuz başvurunun cevabını görmek ve isterseniz görüşmeyi devam ettirmek için şu <a href = '" + link + "'>linke</a> tıklayın.</p>");

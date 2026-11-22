@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
     "use strict";
     var app = angular.module("GotFired");
 
@@ -54,14 +54,14 @@
             vm.$onInit = function () {
                 vm.roles = userResource.getAllRoles();
                 console.log(vm.roles);
-                vm.userRoleModel = userResource.getUserRoles({ id: $routeParams.id });
+                vm.userRoleModel = userResource.get({ id: $routeParams.id });
             };
             
             vm.update = function () {
                 console.log("data : " + vm.userRoleModel);
                 console.log(vm.userRoleModel);
 
-                userResource.updateUserRoles(vm.userRoleModel, function (result) {
+                userResource.update({ Id: vm.userRoleModel.Id, FriendlyName: vm.userRoleModel.FriendlyName, UserRoles: vm.userRoleModel.UserRoles }, function (result) {
                     console.log(result);
                     window.location.href = '#/user/list';
                 }, function (error) {
@@ -77,14 +77,14 @@
             var vm = this;
             vm.data = {};
             vm.$onInit = function () {
-                vm.data = userResource.getUserById({ id: $routeParams.id });
+                vm.data = userResource.get({ id: $routeParams.id });
                 
             };
             vm.changePassword = function () {
                 console.log("data : " + vm.data);
                 console.log(vm.data);
 
-                userResource.changePassword(vm.data, function (result) {
+                userResource.changePassword({ Id: vm.data.Id, Password: vm.data.Password }, function (result) {
                     console.log(result);
                     window.location.href = '#/user/list';
                 }, function (error) {

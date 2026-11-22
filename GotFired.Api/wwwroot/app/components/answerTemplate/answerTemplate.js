@@ -49,22 +49,25 @@
     app.component('answertemplateEdit', {
         templateUrl: '../app/components/answerTemplate/edit.html',
         controllerAs: "vm",
-        controller: function (answerTemplateResource, $rootScope, $routeParams) {
+        controller: function (answerTemplateResource, authService, $http, $routeParams) {
             var vm = this;
             vm.$onInit = function () {
-                vm.model = answerTemplateResource.getById({ id: $routeParams.id });
+                // The ETag identifies the version being edited; it goes back in If-Match so a concurrent
+                // edit is detected (412) instead of silently overwritten.
+                vm.model = answerTemplateResource.getById({ id: $routeParams.id }, function (value, headers) {
+                    vm.etag = headers('ETag');
+                });
             };
 
             vm.update = function () {
-                console.log("data : " + vm.model);
-                console.log(vm.model);
-
-                answerTemplateResource.update(vm.model, function (result) {
-                    console.log(result);
-                    window.location.href = '#/answertemplate/list';
-                }, function (error) {
-                    console.log(error);
-                })
+                $http.put('/api/v1/answer-templates/' + vm.model.ID,
+                    { Name: vm.model.Name, Content: vm.model.Content },
+                    { headers: { 'Authorization': 'Bearer ' + authService.getAccessToken(), 'If-Match': vm.etag } })
+                    .then(function () {
+                        window.location.href = '#/answertemplate/list';
+                    }, function (error) {
+                        console.log(error);
+                    });
             }
         }
     });

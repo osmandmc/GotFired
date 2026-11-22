@@ -1,4 +1,4 @@
-namespace GotFired.Api.Auth
+namespace GotFired.Api.Features.Auth
 {
     /// <summary>Bound from the "Jwt" configuration section.</summary>
     public class JwtOptions

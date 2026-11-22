@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
     "use strict";
     angular.module("service", ['ngResource'])
     .constant("settings", {
@@ -66,157 +66,67 @@
         return authObj;
     };
 
-    function dismissalResource($resource, settings, authService) {
-        //console.log(authService.getToken());
+    // REST API (see GotFired.Api/Features/Endpoints.cs). Each function keeps the action names the components use.
+    function auth(authService) {
+        return { 'Authorization': 'Bearer ' + authService.getAccessToken() };
+    }
 
-        return $resource("/api/v1/ ", null,
+    function dismissalResource($resource, settings, authService) {
+        return $resource("/api/v1/cases", null,
             {
-                all: {
-                    method: 'GET', url: "api/v1/dismissalcase/index/:page",
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() },
-                    params: { page: '@page' }
-                },
-                pending: {
-                    method: 'GET', url: "/api/v1/dismissalcase/pending/:page",
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() },
-                    params: { page: '@page' }
-                },
-                answered: {
-                    method: 'GET', url: "/api/v1/dismissalcase/answered/:page",
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() },
-                    params: { page: '@page' }
-                }
+                all: { method: 'GET', headers: auth(authService), params: { page: '@page' } },
+                pending: { method: 'GET', headers: auth(authService), params: { page: '@page', state: 'pending' } },
+                answered: { method: 'GET', headers: auth(authService), params: { page: '@page', state: 'answered' } }
             });
     };
 
     function dismissalViewResource($resource, settings, authService) {
-        return $resource("/api/v1/dismissalcase/view/:id", null,
+        return $resource("/api/v1/cases/:id", { id: '@id' },
             {
-                view: {
-                    method: 'GET',
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() },
-                    params: { id: '@id' }
-                }, 
-                evaluate: {
-                    method: 'POST', url: "api/v1/dismissalCase/evaluate",
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() }
-                },
-                addTag: {
-                    method: 'POST', url: "api/v1/dismissalCase/addTag",
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() }
-                },
-                removeTag: {
-                    method: 'POST', url: "api/v1/dismissalCase/removeTag",
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() }
-                },
-                postNotes: {
-                    method: 'POST', url: "api/v1/dismissalCase/postNotes",
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() }
-                },
-                makeRead: {
-                    method: 'POST', url: "api/v1/dismissalCase/makeRead",
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() }
-                    
-                }, 
-                getCategories: {
-                    method: 'GET', url: "api/v1/dismissalCase/getCategories", isArray: true,
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() }                   
-                },
-                getTags: {
-                    method: 'GET', url: "api/v1/dismissalCase/getTags", isArray: true,
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() },
-                },
-                getTagsByQuery: {
-                    method: 'GET', url: "api/v1/dismissalCase/getTags/:query", isArray: true,
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() },
-                    params: { query: '@query' }
-                }
-                ,
-                getAnswerTemplates: {
-                    method: 'GET', url: "api/v1/dismissalCase/getAnswerTemplates", isArray: true,
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() },
-                },
-                getAnswerTemplateContent: {
-                    method: 'GET', url: "api/v1/dismissalCase/getAnswerTemplateContent/:id", 
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() },
-                    params: { id: '@id' }
-                }
+                view: { method: 'GET', headers: auth(authService) },
+                // body: { TagIds: [..] }
+                setTags: { method: 'PUT', url: "/api/v1/cases/:id/tags", headers: auth(authService) },
+                addTag: { method: 'PUT', url: "/api/v1/cases/:id/tags/:tagId", params: { tagId: '@tagId' }, headers: auth(authService) },
+                removeTag: { method: 'DELETE', url: "/api/v1/cases/:id/tags/:tagId", params: { tagId: '@tagId' }, headers: auth(authService) },
+                // body: { Notes }
+                saveNotes: { method: 'PUT', url: "/api/v1/cases/:id/notes", headers: auth(authService) },
+                // body: { AppealState: 2 }
+                setAppealState: { method: 'PUT', url: "/api/v1/cases/:id/appeal-state", headers: auth(authService) },
+                getCategories: { method: 'GET', url: "/api/v1/categories", isArray: true, headers: auth(authService) },
+                getTags: { method: 'GET', url: "/api/v1/tags", isArray: true, params: { search: '@query' }, headers: auth(authService) },
+                getAnswerTemplates: { method: 'GET', url: "/api/v1/answer-templates", params: { pageSize: 100 }, headers: auth(authService) },
+                getAnswerTemplateContent: { method: 'GET', url: "/api/v1/answer-templates/:id", headers: auth(authService) }
             });
     };
 
     function answerResource($resource, settings, authService) {
-        return $resource("/api/v1/dismissalcase/answer/", null,
-                    {
-                        post:
-                            {
-                                headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() },
-                                method: 'POST'
-                            }
-
-                    });
+        // body: { Text }
+        return $resource("/api/v1/cases/:id/comments", { id: '@id' },
+            { post: { method: 'POST', headers: auth(authService) } });
     }
 
     function userResource($resource, settings, authService) {
-        return $resource("/api/v1/auth/", null,
+        return $resource("/api/v1/users/:id", { id: '@Id' },
             {
-                list: {
-                    method: 'GET', url: "api/v1/auth/index/:page",
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() },
-                    params: { page: '@page' }
-                },
-                getAllRoles: {
-                    method: 'GET', url: "api/v1/auth/getAllRoles", isArray: true,
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() },
-                },
-                getUserRoles: {
-                    method: 'GET', url: "api/v1/auth/getUserRoles/:id",
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() },
-                    params: { id: '@id' }
-                },
-                updateUserRoles: {
-                    method: 'POST', url: "api/v1/auth/updateUserRoles",
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() }
-                },
-                post: {
-                    method: 'POST', url: "api/v1/auth/create",
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() }
-                },
-                changePassword: {
-                    method: 'POST', url: "api/v1/auth/changePassword",
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() }
-                },
-                getUserById: {
-                    method: 'GET', url: "api/v1/auth/getUserById/:id",
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() },
-                    params: { id: '@id' }
-                },
-
-
+                list: { method: 'GET', url: "/api/v1/users", params: { page: '@page' }, headers: auth(authService) },
+                getAllRoles: { method: 'GET', url: "/api/v1/roles", isArray: true, headers: auth(authService) },
+                // GET /users/:id returns { Id, UserName, FriendlyName, UserRoles }
+                get: { method: 'GET', headers: auth(authService) },
+                // body: { FriendlyName, UserRoles }
+                update: { method: 'PUT', headers: auth(authService) },
+                post: { method: 'POST', url: "/api/v1/users", headers: auth(authService) },
+                // body: { Password }
+                changePassword: { method: 'PUT', url: "/api/v1/users/:id/password", headers: auth(authService) }
             });
     };
 
     function answerTemplateResource($resource, settings, authService) {
-        return $resource("/api/v1/auth/", null,
+        // Updates need the ETag from GET in If-Match: see answerTemplateEdit (uses $http).
+        return $resource("/api/v1/answer-templates/:id", { id: '@ID' },
             {
-                list: {
-                    method: 'GET', url: "api/v1/answerTemplate/list/:page",
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() },
-                    params: { page: '@page' }
-                },
-                getById: {
-                    method: 'GET', url: "api/v1/answerTemplate/getById/:id",
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() },
-                },
-                update: {
-                    method: 'POST', url: "api/v1/answerTemplate/update",
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() }
-                },
-                create: {
-                    method: 'POST', url: "api/v1/answerTemplate/create",
-                    headers: { 'Authorization': 'Bearer ' + authService.getAccessToken() }
-                }
-                
+                list: { method: 'GET', url: "/api/v1/answer-templates", params: { page: '@page' }, headers: auth(authService) },
+                getById: { method: 'GET', headers: auth(authService) },
+                create: { method: 'POST', url: "/api/v1/answer-templates", headers: auth(authService) }
             });
     };
-
 })();

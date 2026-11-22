@@ -1,19 +1,17 @@
 using System.Text;
-using GotFired.Api.Auth;
+using System.Text.Json.Serialization;
+using GotFired.Api.Features;
+using GotFired.Api.Features.ApplicantAccess;
+using GotFired.Api.Features.Auth;
 using GotFired.Api.Infrastructure;
-using GotFired.Business;
-using GotFired.Business.Email;
-using GotFired.Business.Services;
+using GotFired.Api.Infrastructure.Email;
 using GotFired.DAL;
 using GotFired.DAL.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
@@ -56,11 +54,9 @@ builder.Services.Configure<PasswordHasherOptions>(o =>
         o.CompatibilityMode = PasswordHasherCompatibilityMode.IdentityV2;
 });
 
-// --- Application services ---------------------------------------------------------------------
+// --- Features (vertical slices: one command or query handler per use case) ----------------------
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddScoped<ICaseService, CaseService>();
-builder.Services.AddScoped<IAnswerTemplateService, AnswerTemplateService>();
-builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddHandlers();
 builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>(); // stateless; also used by the singleton exception handler
 builder.Services.Configure<SmtpOptions>(config.GetSection(SmtpOptions.SectionName));
 builder.Services.Configure<ApplicantLinkOptions>(config.GetSection(ApplicantLinkOptions.SectionName));
@@ -86,27 +82,22 @@ builder.Services
             RoleClaimType = TokenService.RoleClaimType,
         };
     });
-builder.Services.AddAuthorization();
+builder.Services.AddEndpointPolicies();
 
-// --- MVC ---------------------------------------------------------------------------------------
-builder.Services
-    // Web API 2 returned Ok("text") as a JSON string; ASP.NET Core would write it as raw text/plain.
-    .AddControllers(o => o.OutputFormatters.RemoveType<Microsoft.AspNetCore.Mvc.Formatters.StringOutputFormatter>())
-    // Keep Web API 2's Newtonsoft behaviour: PascalCase property names, ISO dates, lenient number parsing.
-    .AddNewtonsoftJson(o =>
-    {
-        o.SerializerSettings.ContractResolver = new DefaultContractResolver();
-        o.SerializerSettings.DateFormatHandling = DateFormatHandling.IsoDateFormat;
-        o.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
-    });
-builder.Services.Configure<ApiBehaviorOptions>(o =>
+// --- HTTP ---------------------------------------------------------------------------------------
+builder.Services.ConfigureHttpJsonOptions(o =>
 {
-    // Web API 2 did not reject invalid models automatically; controllers check ModelState themselves.
-    o.SuppressModelStateInvalidFilter = true;
+    // PascalCase property names: the existing pages read e.g. data.FullName. Problem Details keep their standard
+    // lower-case names (type, title, status, detail, errors).
+    o.SerializerOptions.PropertyNamingPolicy = null;
+    o.SerializerOptions.DictionaryKeyPolicy = null;
+    // The AngularJS pages send ids taken from the URL as strings ("42").
+    o.SerializerOptions.NumberHandling = JsonNumberHandling.AllowReadingFromString;
 });
 
-// Order matters: rule violations are answered with 412 before anything is treated as an error.
+// Order matters: rule violations are answered (422) before anything is treated as an error.
 builder.Services.AddExceptionHandler<BusinessRuleExceptionHandler>();
+builder.Services.AddExceptionHandler<ConflictExceptionHandler>();
 builder.Services.AddExceptionHandler<EmailExceptionHandler>();
 builder.Services.AddProblemDetails();
 
@@ -123,8 +114,7 @@ var app = builder.Build();
 app.UseForwardedHeaders();
 app.Use((context, next) =>
 {
-    // Applicant links carry a secret token in the URL: never leak it to other sites via the Referer header
-    // (userView.html loads third-party scripts).
+    // Defence in depth for the applicant page (its link carries a secret token in the URL fragment).
     context.Response.Headers["Referrer-Policy"] = "no-referrer";
     context.Response.Headers.XContentTypeOptions = "nosniff";
     return next(context);
@@ -137,8 +127,7 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapTokenEndpoint();
-app.MapControllers();
+app.MapFeatures();
 
 if (config.GetValue<bool>("Seed:Enabled"))
 {

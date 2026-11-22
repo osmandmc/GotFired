@@ -1,11 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using GotFired.Model.ViewModels;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-namespace GotFired.Api.Auth
+namespace GotFired.Api.Features.Auth
 {
     public class TokenService
     {
@@ -23,10 +22,10 @@ namespace GotFired.Api.Auth
 
         public TimeSpan Lifetime => _options.Lifetime;
 
-        public string CreateToken(UserTokenModel user)
+        public string CreateToken(string userName, IEnumerable<string> roles)
         {
-            var claims = new List<Claim> { new(NameClaimType, user.UserName) };
-            claims.AddRange(user.Roles.Select(r => new Claim(RoleClaimType, r)));
+            var claims = new List<Claim> { new(NameClaimType, userName) };
+            claims.AddRange(roles.Select(r => new Claim(RoleClaimType, r)));
 
             var token = new JwtSecurityToken(
                 issuer: _options.Issuer,

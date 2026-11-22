@@ -1,4 +1,4 @@
-namespace GotFired.Business
+namespace GotFired.Api.Infrastructure.Email
 {
     /// <summary>Bound from the "Smtp" configuration section (replaces Web.config system.net/mailSettings).</summary>
     public class SmtpOptions

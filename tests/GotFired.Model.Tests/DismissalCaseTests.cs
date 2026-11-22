@@ -52,7 +52,7 @@ public class DismissalCaseTests
     {
         var dismissalCase = NewCase();
 
-        string link = dismissalCase.AnswerByStaff("<p>cevap</p>", "personel", Now, NinetyDays);
+        string link = dismissalCase.AnswerByStaff("<p>cevap</p>", "personel", Now, NinetyDays).LinkToken;
 
         Assert.Equal(AppealState.Answered, dismissalCase.AppealState);
         var comment = Assert.Single(dismissalCase.Comments);
@@ -66,9 +66,9 @@ public class DismissalCaseTests
     public void A_new_answer_replaces_the_previous_link()
     {
         var dismissalCase = NewCase();
-        string first = dismissalCase.AnswerByStaff("1", "personel", Now, NinetyDays);
+        string first = dismissalCase.AnswerByStaff("1", "personel", Now, NinetyDays).LinkToken;
 
-        string second = dismissalCase.AnswerByStaff("2", "personel", Now, NinetyDays);
+        string second = dismissalCase.AnswerByStaff("2", "personel", Now, NinetyDays).LinkToken;
 
         Assert.False(dismissalCase.IsAccessibleWith(first, Now));
         Assert.True(dismissalCase.IsAccessibleWith(second, Now));
@@ -78,7 +78,7 @@ public class DismissalCaseTests
     public void The_link_works_until_it_expires()
     {
         var dismissalCase = NewCase();
-        string link = dismissalCase.AnswerByStaff("cevap", "personel", Now, NinetyDays);
+        string link = dismissalCase.AnswerByStaff("cevap", "personel", Now, NinetyDays).LinkToken;
 
         Assert.True(dismissalCase.IsAccessibleWith(link, Now + NinetyDays - TimeSpan.FromSeconds(1)));
         Assert.False(dismissalCase.IsAccessibleWith(link, Now + NinetyDays));
@@ -92,7 +92,7 @@ public class DismissalCaseTests
     public void Anything_but_the_current_link_is_refused(string token)
     {
         var dismissalCase = NewCase();
-        dismissalCase.AnswerByStaff("cevap", "personel", Now, NinetyDays);
+        _ = dismissalCase.AnswerByStaff("cevap", "personel", Now, NinetyDays);
 
         Assert.False(dismissalCase.IsAccessibleWith(token, Now));
     }
@@ -110,7 +110,7 @@ public class DismissalCaseTests
     public void The_query_rule_and_the_in_memory_rule_agree(int daysLater, bool expected)
     {
         var dismissalCase = NewCase();
-        string link = dismissalCase.AnswerByStaff("cevap", "personel", Now, NinetyDays);
+        string link = dismissalCase.AnswerByStaff("cevap", "personel", Now, NinetyDays).LinkToken;
         DateTime at = Now.AddDays(daysLater);
 
         bool inQuery = DismissalCase.AccessibleWith(ApplicantAccessToken.TryHash(link), at).Compile()(dismissalCase);
@@ -125,7 +125,7 @@ public class DismissalCaseTests
     public void An_applicant_reply_is_recorded_under_their_name_and_reopens_the_case()
     {
         var dismissalCase = NewCase();
-        string link = dismissalCase.AnswerByStaff("cevap", "personel", Now, NinetyDays);
+        string link = dismissalCase.AnswerByStaff("cevap", "personel", Now, NinetyDays).LinkToken;
 
         var reply = dismissalCase.ReplyAsApplicant(link, "<p>soru</p>", Now.AddDays(1));
 
@@ -138,7 +138,7 @@ public class DismissalCaseTests
     public void A_reply_needs_a_valid_unexpired_link()
     {
         var dismissalCase = NewCase();
-        string link = dismissalCase.AnswerByStaff("cevap", "personel", Now, NinetyDays);
+        string link = dismissalCase.AnswerByStaff("cevap", "personel", Now, NinetyDays).LinkToken;
 
         Assert.Throws<BusinessRuleException>(() => dismissalCase.ReplyAsApplicant("wrong", "x", Now));
         Assert.Throws<BusinessRuleException>(() => dismissalCase.ReplyAsApplicant(link, "x", Now + NinetyDays));

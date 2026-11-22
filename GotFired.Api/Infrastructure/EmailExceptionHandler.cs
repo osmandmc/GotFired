@@ -1,6 +1,5 @@
-using GotFired.Business.Email;
+using GotFired.Api.Infrastructure.Email;
 using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Mvc.Controllers;
 
 namespace GotFired.Api.Infrastructure
 {
@@ -22,9 +21,9 @@ namespace GotFired.Api.Infrastructure
         public ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
         {
             // The exception middleware clears the current endpoint before handlers run; the feature keeps the original.
+            // DisplayName is the route, e.g. "HTTP: PUT /api/v1/cases/{id:int}/appeal-state".
             var endpoint = httpContext.Features.Get<IExceptionHandlerFeature>()?.Endpoint ?? httpContext.GetEndpoint();
-            string action = endpoint?.Metadata.GetMetadata<ControllerActionDescriptor>()?.ActionName
-                            ?? httpContext.Request.Path;
+            string action = endpoint?.DisplayName ?? httpContext.Request.Path;
             _logger.LogError(exception, "Unhandled exception in {Action}", action);
 
             try

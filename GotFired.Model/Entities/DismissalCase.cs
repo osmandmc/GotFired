@@ -104,20 +104,21 @@ namespace GotFired.Model.Entities
 
         /// <summary>
         /// Records a staff answer, marks the case answered and issues a new applicant link, invalidating the
-        /// previous one. Returns the link token to email; only its hash is kept.
+        /// previous one. Returns the comment and the link token to email; only the token's hash is kept.
         /// </summary>
-        public string AnswerByStaff(string text, string staffUserName, DateTime utcNow, TimeSpan linkLifetime)
+        public StaffAnswer AnswerByStaff(string text, string staffUserName, DateTime utcNow, TimeSpan linkLifetime)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(staffUserName);
             if (linkLifetime <= TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(linkLifetime));
 
-            _comments.Add(new Comment(text, staffUserName));
+            var comment = new Comment(text, staffUserName);
+            _comments.Add(comment);
             AppealState = AppealState.Answered;
 
             var (token, hash) = ApplicantAccessToken.Create();
             AccessTokenHash = hash;
             AccessTokenExpiresAt = utcNow.Add(linkLifetime);
-            return token;
+            return new StaffAnswer(comment, token);
         }
 
         /// <summary>Staff mark a pending case as handled without answering.</summary>
@@ -182,6 +183,9 @@ namespace GotFired.Model.Entities
         public static Expression<Func<DismissalCase, bool>> AccessibleWith(byte[] tokenHash, DateTime utcNow) =>
             d => d.AccessTokenHash != null && d.AccessTokenHash.SequenceEqual(tokenHash) && d.AccessTokenExpiresAt > utcNow;
     }
+
+    /// <summary>The comment a staff answer created and the applicant link token to email with it.</summary>
+    public sealed record StaffAnswer(Comment Comment, string LinkToken);
 
     /// <summary>What the applicant reports about their dismissal on the public form.</summary>
     public sealed record CaseDetails

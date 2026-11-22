@@ -1,4 +1,4 @@
-namespace GotFired.Business
+namespace GotFired.Api.Features.ApplicantAccess
 {
     /// <summary>Bound from the "ApplicantLinks" configuration section.</summary>
     public class ApplicantLinkOptions

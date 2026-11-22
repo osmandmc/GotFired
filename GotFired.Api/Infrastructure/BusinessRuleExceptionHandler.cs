@@ -4,22 +4,22 @@ using Microsoft.AspNetCore.Diagnostics;
 namespace GotFired.Api.Infrastructure
 {
     /// <summary>
-    /// Rule violations become HTTP 412 { StatusMessage, StatusText }: the SPA's interceptor (app/app.js) shows them as a
-    /// warning toast. They are expected outcomes, so they are neither logged as errors nor emailed.
+    /// A request the business rules reject: 422 Unprocessable Content as Problem Details, with the reason in
+    /// "detail" (shown by the SPA as a warning toast). Expected outcomes: not logged as errors, not emailed.
     /// </summary>
-    public class BusinessRuleExceptionHandler : IExceptionHandler
+    public class BusinessRuleExceptionHandler(IProblemDetailsService problemDetails) : IExceptionHandler
     {
         public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
         {
             if (exception is not BusinessRuleException) return false;
 
-            httpContext.Response.StatusCode = StatusCodes.Status412PreconditionFailed;
-            await httpContext.Response.WriteAsJsonAsync(new Dictionary<string, string>
+            httpContext.Response.StatusCode = StatusCodes.Status422UnprocessableEntity;
+            return await problemDetails.TryWriteAsync(new ProblemDetailsContext
             {
-                ["StatusMessage"] = exception.Message,
-                ["StatusText"] = "Uyarı",
-            }, cancellationToken);
-            return true;
+                HttpContext = httpContext,
+                Exception = exception,
+                ProblemDetails = { Status = StatusCodes.Status422UnprocessableEntity, Title = "İşlem yapılamadı.", Detail = exception.Message },
+            });
         }
     }
 }

@@ -28,7 +28,7 @@ public sealed class Mailpit(Uri baseAddress)
         var messages = await MessagesToAsync(address);
         if (messages.Count == 0) return null;
         string html = await HtmlAsync(messages[0]);
-        const string marker = "userview.html?guid=";
+        const string marker = "userView.html#token=";
         int start = html.IndexOf(marker, StringComparison.Ordinal);
         return start < 0 ? null : html[(start + marker.Length)..].Split('\'')[0];
     }

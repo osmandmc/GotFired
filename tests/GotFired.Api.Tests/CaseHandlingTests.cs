@@ -9,12 +9,12 @@ public class CaseHandlingTests(TestEnvironment env)
     private Task<ApiClient> AdminAsync() => env.CreateClient().LoginAsync(TestEnvironment.AdminUser, TestEnvironment.LegacyPassword);
 
     [Theory]
-    [InlineData("index/1")]
-    [InlineData("pending/1")]
-    [InlineData("answered/1")]
-    public async Task Case_lists_are_paged_by_20(string path)
+    [InlineData("")]
+    [InlineData("?state=pending")]
+    [InlineData("?state=answered&page=1")]
+    public async Task Case_lists_are_paged_by_20(string query)
     {
-        var response = await (await AdminAsync()).GetAsync($"/api/v1/dismissalcase/{path}");
+        var response = await (await AdminAsync()).GetAsync($"/api/v1/cases{query}");
 
         Assert.Equal(HttpStatusCode.OK, response.Status);
         Assert.Equal(20, (int)response["paging"]!["ItemsPerPage"]);
@@ -22,9 +22,18 @@ public class CaseHandlingTests(TestEnvironment env)
     }
 
     [Fact]
+    public async Task An_unknown_state_filter_is_a_validation_problem()
+    {
+        var response = await (await AdminAsync()).GetAsync("/api/v1/cases?state=closed");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.Status);
+        Assert.NotNull(response["errors"]!["state"]);
+    }
+
+    [Fact]
     public async Task Case_view_shows_city_supporters_and_conversation()
     {
-        var view = await (await AdminAsync()).GetAsync("/api/v1/dismissalcase/view/1");   // legacy fixture case
+        var view = await (await AdminAsync()).GetAsync("/api/v1/cases/1");   // legacy fixture case
 
         Assert.Equal(HttpStatusCode.OK, view.Status);
         Assert.Equal("İstanbul", (string)view["CityName"]);
@@ -36,111 +45,148 @@ public class CaseHandlingTests(TestEnvironment env)
     public async Task Case_view_shows_the_SGK_reason_the_applicant_chose()
     {
         var anonymous = env.CreateClient();
-        var lookups = await anonymous.GetAsync("/api/v1/dismissalcase/apply");
-        var sgk = lookups["sgkTerminationReasons"]![0]!;
+        var form = await anonymous.GetAsync("/api/v1/application-form");
+        var sgk = form["sgkTerminationReasons"]![0]!;
         string name = TestData.Unique("SGK");
-        var form = TestData.ApplicationForm((string)lookups["guid"], name, "sgk@example.com", (int)lookups["cities"]![0]!["ID"])
+        var fields = TestData.ApplicationForm((string)form["guid"], name, "sgk@example.com", (int)form["cities"]![0]!["ID"])
             .Where(f => f.Key != "SGKTerminationReasonID")
-            .Append(new("SGKTerminationReasonID", ((int)sgk["ID"]).ToString()))   // and no declared reason
+            .Append(new("SGKTerminationReasonID", ((int)sgk["ID"]).ToString()))
             .ToList();
-        await anonymous.PostFormAsync("/api/v1/dismissalcase/apply", form);
+        await anonymous.PostFormAsync("/api/v1/applications", fields);
         var admin = await AdminAsync();
 
-        var view = await admin.GetAsync($"/api/v1/dismissalcase/view/{await TestData.FindCaseIdAsync(admin, name)}");
+        var view = await admin.GetAsync($"/api/v1/cases/{await TestData.FindCaseIdAsync(admin, name)}");
 
-        Assert.Equal((int)sgk["ID"], (int)view["SGKTerminationReasonId"]);
         Assert.Equal($"{sgk["Code"]} - {sgk["Name"]}", (string)view["SGKTerminationReasonName"]);
     }
 
     [Fact]
-    public async Task Missing_case_returns_the_old_error_message()
+    public async Task A_missing_case_is_404_problem_details()
     {
-        var response = await (await AdminAsync()).GetAsync("/api/v1/dismissalcase/view/999999");
+        var response = await (await AdminAsync()).GetAsync("/api/v1/cases/999999");
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.Status);
-        Assert.Equal("model cannot be null", (string)response["Message"]);
+        Assert.Equal(HttpStatusCode.NotFound, response.Status);
+        Assert.Equal("application/problem+json", response.ContentHeaders.ContentType?.MediaType);
+        Assert.Equal(404, (int)response["status"]);
     }
 
     [Fact]
-    public async Task Staff_answer_is_recorded_under_the_signed_in_user_and_moves_the_case_to_answered()
+    public async Task Staff_answer_is_201_recorded_under_the_signed_in_user_and_moves_the_case_to_answered()
     {
         var (caseId, _, _, _) = await TestData.CreateCaseAsync(env);
         var admin = await AdminAsync();
 
-        await TestData.AnswerAsync(admin, caseId, "<p>cevap</p>");
+        var answer = await TestData.AnswerAsync(admin, caseId, "<p>cevap</p>");
 
-        var view = await admin.GetAsync($"/api/v1/dismissalcase/view/{caseId}");
-        Assert.Equal([TestEnvironment.AdminUser], view["Comments"]!.Select(c => (string)c["UserName"]));
-        var answered = await admin.GetAsync("/api/v1/dismissalcase/answered/1");
+        Assert.Equal(HttpStatusCode.Created, answer.Status);
+        Assert.Equal($"/api/v1/cases/{caseId}", answer.Location);
+        Assert.Equal(TestEnvironment.AdminUser, (string)answer["UserName"]);
+        var answered = await admin.GetAsync("/api/v1/cases?state=answered");
         Assert.Contains(answered["data"]!, c => (int)c["Id"] == caseId);
     }
 
     [Fact]
-    public async Task Notes_are_saved()
+    public async Task Notes_are_replaced_with_PUT()
     {
         var (caseId, _, _, _) = await TestData.CreateCaseAsync(env);
         var admin = await AdminAsync();
 
-        // The SPA sends camelCase keys and the id as a string.
-        var response = await admin.PostJsonAsync("/api/v1/dismissalcase/postNotes", new { notes = "not", dismissalCaseId = caseId.ToString() });
+        var response = await admin.PutJsonAsync($"/api/v1/cases/{caseId}/notes", new { Notes = "not" });
 
-        Assert.Equal(HttpStatusCode.OK, response.Status);
-        Assert.Equal("not", (string)(await admin.GetAsync($"/api/v1/dismissalcase/view/{caseId}"))["Notes"]);
+        Assert.Equal(HttpStatusCode.NoContent, response.Status);
+        Assert.Equal("not", (string)(await admin.GetAsync($"/api/v1/cases/{caseId}"))["Notes"]);
     }
 
     [Fact]
-    public async Task Evaluating_a_case_replaces_its_tags()
+    public async Task Changing_a_missing_case_is_404()
+    {
+        var response = await (await AdminAsync()).PutJsonAsync("/api/v1/cases/999999/notes", new { Notes = "x" });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.Status);
+    }
+
+    [Fact]
+    public async Task Tags_are_replaced_with_PUT_on_the_collection()
     {
         var (caseId, _, _, _) = await TestData.CreateCaseAsync(env);
         var admin = await AdminAsync();
-        var tags = await admin.GetAsync("/api/v1/dismissalcase/getTags/taz");
-        int tagId = (int)tags.Json!.Single(t => (string)t["Name"] == "tazminat")["ID"];
+        int tagId = (int)(await admin.GetAsync("/api/v1/tags?search=taz")).Json!.Single(t => (string)t["Name"] == "tazminat")["ID"];
 
-        await admin.PostJsonAsync("/api/v1/dismissalcase/evaluate", new { DismissalCaseId = caseId, CategoryId = 0, Tags = new[] { new { ID = tagId, Name = "tazminat" } } });
+        var response = await admin.PutJsonAsync($"/api/v1/cases/{caseId}/tags", new { TagIds = new[] { tagId } });
 
-        var view = await admin.GetAsync($"/api/v1/dismissalcase/view/{caseId}");
+        Assert.Equal(HttpStatusCode.NoContent, response.Status);
+        var view = await admin.GetAsync($"/api/v1/cases/{caseId}");
         Assert.Equal([tagId], view["DismissalCaseTags"]!.Select(t => (int)t["ID"]));
     }
 
     [Fact]
-    public async Task Tags_can_be_removed_and_added_one_at_a_time()
+    public async Task A_single_tag_is_added_with_idempotent_PUT_and_removed_with_DELETE()
     {
         var (caseId, _, _, _) = await TestData.CreateCaseAsync(env);
         var admin = await AdminAsync();
-        int tagId = (int)(await admin.GetAsync("/api/v1/dismissalcase/getTags/taz")).Json!.First()["ID"];
+        int tagId = (int)(await admin.GetAsync("/api/v1/tags")).Json!.First()["ID"];
 
-        await admin.PostJsonAsync("/api/v1/dismissalcase/addTag", new { DismissalCaseID = caseId, TagID = tagId });
-        var afterAdd = await admin.GetAsync($"/api/v1/dismissalcase/view/{caseId}");
-        await admin.PostJsonAsync("/api/v1/dismissalcase/removeTag", new { DismissalCaseID = caseId, TagID = tagId });
-        var afterRemove = await admin.GetAsync($"/api/v1/dismissalcase/view/{caseId}");
+        Assert.Equal(HttpStatusCode.NoContent, (await admin.PutAsync($"/api/v1/cases/{caseId}/tags/{tagId}")).Status);
+        Assert.Equal(HttpStatusCode.NoContent, (await admin.PutAsync($"/api/v1/cases/{caseId}/tags/{tagId}")).Status);
+        var afterAdd = await admin.GetAsync($"/api/v1/cases/{caseId}");
+        Assert.Equal(HttpStatusCode.NoContent, (await admin.DeleteAsync($"/api/v1/cases/{caseId}/tags/{tagId}")).Status);
+        var afterRemove = await admin.GetAsync($"/api/v1/cases/{caseId}");
 
         Assert.Equal([tagId], afterAdd["DismissalCaseTags"]!.Select(t => (int)t["ID"]));
         Assert.Empty(afterRemove["DismissalCaseTags"]!);
     }
 
     [Fact]
-    public async Task Mark_as_read_moves_a_pending_case_to_answered()
+    public async Task Marking_a_case_answered_sets_its_appeal_state()
     {
         var (caseId, _, _, _) = await TestData.CreateCaseAsync(env);
         var admin = await AdminAsync();
 
-        var response = await admin.PostJsonAsync("/api/v1/dismissalcase/makeRead", new { Id = caseId });
+        var response = await admin.PutJsonAsync($"/api/v1/cases/{caseId}/appeal-state", new { AppealState = 2 });
 
-        Assert.Equal(HttpStatusCode.OK, response.Status);
-        Assert.Contains((await admin.GetAsync("/api/v1/dismissalcase/answered/1"))["data"]!, c => (int)c["Id"] == caseId);
+        Assert.Equal(HttpStatusCode.NoContent, response.Status);
+        Assert.Equal(2, (int)(await admin.GetAsync($"/api/v1/cases/{caseId}"))["AppealState"]);
     }
 
     [Fact]
-    public async Task Answer_templates_and_categories_are_offered_while_answering()
+    public async Task Staff_cannot_set_a_case_back_to_pending()
     {
+        var (caseId, _, _, _) = await TestData.CreateCaseAsync(env);
+
+        var response = await (await AdminAsync()).PutJsonAsync($"/api/v1/cases/{caseId}/appeal-state", new { AppealState = 1 });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.Status);
+    }
+
+    [Fact]
+    public async Task Concurrent_changes_to_one_case_all_succeed()
+    {
+        // e.g. an answer still being saved while the same staff member marks the case read (found by the UI test).
+        var (caseId, _, _, _) = await TestData.CreateCaseAsync(env);
         var admin = await AdminAsync();
 
-        var templates = await admin.GetAsync("/api/v1/dismissalcase/getAnswerTemplates");
-        var content = await admin.GetAsync($"/api/v1/dismissalcase/getAnswerTemplateContent/{(int)templates.Json![0]!["ID"]}");
-        var categories = await admin.GetAsync("/api/v1/dismissalcase/getCategories");
+        var responses = await Task.WhenAll(Enumerable.Range(0, 6).Select(i => (i % 3) switch
+        {
+            0 => TestData.AnswerAsync(admin, caseId, $"<p>cevap {i}</p>"),
+            1 => admin.PutJsonAsync($"/api/v1/cases/{caseId}/notes", new { Notes = $"not {i}" }),
+            _ => admin.PutJsonAsync($"/api/v1/cases/{caseId}/appeal-state", new { AppealState = 2 }),
+        }));
 
-        Assert.NotNull(templates.Json[0]!["Name"]);
-        Assert.False(string.IsNullOrEmpty((string)content["Content"]));
+        Assert.All(responses, r => Assert.True(r.Status is HttpStatusCode.Created or HttpStatusCode.NoContent, $"{r.Status}: {r.Body}"));
+        var view = await admin.GetAsync($"/api/v1/cases/{caseId}");
+        Assert.Equal(2, view["Comments"]!.Count());
+    }
+
+    [Fact]
+    public async Task Templates_and_categories_are_offered_while_answering()
+    {
+        var editor = await AdminAsync();
+
+        var templates = await editor.GetAsync("/api/v1/answer-templates?pageSize=100");
+        var template = await editor.GetAsync($"/api/v1/answer-templates/{(int)templates["data"]![0]!["ID"]}");
+        var categories = await editor.GetAsync("/api/v1/categories");
+
+        Assert.False(string.IsNullOrEmpty((string)template["Content"]));
         Assert.Equal(HttpStatusCode.OK, categories.Status);
     }
 }

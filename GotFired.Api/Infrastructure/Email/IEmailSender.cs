@@ -1,4 +1,4 @@
-namespace GotFired.Business.Email
+namespace GotFired.Api.Infrastructure.Email
 {
     public interface IEmailSender
     {
